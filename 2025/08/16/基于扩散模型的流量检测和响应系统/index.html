@@ -1,0 +1,790 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="rgba(71, 46, 98, 0.8)">
+  <meta name="author" content="kyrie711-wq">
+  <meta name="keywords" content="博客,技术,笔记">
+  
+    <meta name="description" content="📋 项目概述系统是一个端到端的SOAR（安全编排、自动化与响应）平台，核心采用扩散概率模型作为检测引擎，结合事件驱动微服务架构和可视化工具。整体分为五层结构，包括流量采集与预处理、深度异常检测引擎、SOAR核心控制层、溯源分析与攻击链重建层，以及响应剧本与配置管理。通过Kafka事件总线串联各模块，实现松耦合和高扩展性。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于深度学习的流量检测和响应系统">
+<meta property="og:url" content="https://kyrie711-wq.github.io/2025/08/16/%E5%9F%BA%E4%BA%8E%E6%89%A9%E6%95%A3%E6%A8%A1%E5%9E%8B%E7%9A%84%E6%B5%81%E9%87%8F%E6%A3%80%E6%B5%8B%E5%92%8C%E5%93%8D%E5%BA%94%E7%B3%BB%E7%BB%9F/index.html">
+<meta property="og:site_name" content="我的博客">
+<meta property="og:description" content="📋 项目概述系统是一个端到端的SOAR（安全编排、自动化与响应）平台，核心采用扩散概率模型作为检测引擎，结合事件驱动微服务架构和可视化工具。整体分为五层结构，包括流量采集与预处理、深度异常检测引擎、SOAR核心控制层、溯源分析与攻击链重建层，以及响应剧本与配置管理。通过Kafka事件总线串联各模块，实现松耦合和高扩展性。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://kyrie711-wq.github.io/img/image-20250816154811271.png">
+<meta property="article:published_time" content="2025-08-15T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-08-16T09:27:53.510Z">
+<meta property="article:author" content="kyrie711-wq">
+<meta property="article:tag" content="深度学习">
+<meta property="article:tag" content="安全工具">
+<meta property="article:tag" content="开发实践">
+<meta property="article:tag" content="项目分享">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://kyrie711-wq.github.io/img/image-20250816154811271.png">
+  
+  
+  
+  <title>基于深度学习的流量检测和响应系统 - 我的博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/custom.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"kyrie711-wq.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>我的博客</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>Home</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>Archives</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/%E5%AE%89%E5%85%A8%E9%A1%B9%E7%9B%AE/" target="_self">
+                <i class="iconfont icon-app"></i>
+                <span>安全项目</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98/" target="_self">
+                <i class="iconfont icon-bug-fill"></i>
+                <span>漏洞挖掘</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/CTF%E7%AB%9E%E8%B5%9B/" target="_self">
+                <i class="iconfont icon-flag-fill"></i>
+                <span>CTF竞赛</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/Web%E6%B8%97%E9%80%8F/" target="_self">
+                <i class="iconfont icon-windows-fill"></i>
+                <span>Web渗透</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>Tags</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>About</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/vdysjx.webp') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="基于深度学习的流量检测和响应系统"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-08-16 00:00" pubdate>
+          August 16, 2025 am
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.6k words
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          14 mins
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">基于深度学习的流量检测和响应系统</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="📋-项目概述"><a href="#📋-项目概述" class="headerlink" title="📋 项目概述"></a>📋 项目概述</h2><p>系统是一个端到端的SOAR（安全编排、自动化与响应）平台，核心采用扩散概率模型作为检测引擎，结合事件驱动微服务架构和可视化工具。整体分为五层结构，包括流量采集与预处理、深度异常检测引擎、SOAR核心控制层、溯源分析与攻击链重建层，以及响应剧本与配置管理。通过Kafka事件总线串联各模块，实现松耦合和高扩展性。</p>
+<span id="more"></span>
+
+<h2 id="🎯-项目背景"><a href="#🎯-项目背景" class="headerlink" title="🎯 项目背景"></a>🎯 项目背景</h2><p>在网络安全领域，随着威胁的复杂化，我们开发了一个创新的基于扩散模型的网络安全自动化响应系统。该系统聚焦于精准检测、快速响应和可解释溯源，构建从流量采集到自动处置的闭环防护链，帮助企业提升防御效率。</p>
+<h2 id="🏗️-系统架构"><a href="#🏗️-系统架构" class="headerlink" title="🏗️ 系统架构"></a>🏗️ 系统架构</h2><h3 id="整体架构"><a href="#整体架构" class="headerlink" title="整体架构"></a>整体架构</h3><p>系统围绕”检测、分类、响应、溯源”四大目标，构建了一个事件驱动的微服务架构：采集—解析—推理—响应。核心检测器基于改进的扩散模型（DDPM&#x2F;DDIM），结合多分类输出结构和时间嵌入（如TimesNet&#x2F;SCConv），对长短期流量序列进行精细化编码。在训练阶段，仅需标签监督，不依赖异常样本的规则建模。检测结果触发YAML剧本响应，如自动封禁IP或隔离主机，并通过攻击链可视化提升可解释性。平均威胁响应时间（MTTR）压缩至3-4秒。</p>
+<p><img src="/img/image-20250816154811271.png" srcset="/img/loading.gif" lazyload alt="系统架构图"></p>
+<h3 id="实现原理"><a href="#实现原理" class="headerlink" title="实现原理"></a>实现原理</h3><h4 id="扩散模型基本原理"><a href="#扩散模型基本原理" class="headerlink" title="扩散模型基本原理"></a>扩散模型基本原理</h4><p>扩散模型通过正向过程逐步添加高斯噪声，使数据趋于纯噪声分布；逆向过程则训练模型去噪重建原始数据。在本系统中，我们将其应用于结构化网络流量：以会话级样本为基础，正向添加噪声，逆向预测噪声成分。同时嵌入分类分支，实现重建与判别的双重目标。</p>
+<h4 id="模型结构设计与模块划分"><a href="#模型结构设计与模块划分" class="headerlink" title="模型结构设计与模块划分"></a>模型结构设计与模块划分</h4><p>采用带分类器头的UNet-DDPM架构：</p>
+<ul>
+<li><strong>特征编码器</strong>：处理80+维流量特征（如包间隔、协议类型）。</li>
+<li><strong>U-Net主干</strong>：多尺度残差块、自注意力机制，执行噪声预测。</li>
+<li><strong>分类器头</strong>：输出九类概率向量（正常+八种攻击）。</li>
+<li><strong>时间嵌入</strong>：引导不同扩散阶段的学习。</li>
+<li><strong>额外模块</strong>：DropPath和Attention，提升深度和跨维度关联。</li>
+</ul>
+<p><img src="/img/image-20250816155010520.png" srcset="/img/loading.gif" lazyload alt="模型结构图"></p>
+<h4 id="训练策略与损失函数构建"><a href="#训练策略与损失函数构建" class="headerlink" title="训练策略与损失函数构建"></a>训练策略与损失函数构建</h4><p>联合优化重建损失（MSE，衡量噪声预测误差）和分类损失（交叉熵）。整体损失为加权组合：L &#x3D; λ1 * L_recon + λ2 * L_class。适当提高分类权重，提升小类攻击识别。使用SMOTE过采样缓解不平衡，训练在CICIDS2017数据集上进行，AUC从0.65逐步升至0.95，Loss稳定下降。</p>
+<p><img src="/img/image-20250816154942865.png" srcset="/img/loading.gif" lazyload alt="训练曲线"></p>
+<h4 id="推理机制与多分类判决"><a href="#推理机制与多分类判决" class="headerlink" title="推理机制与多分类判决"></a>推理机制与多分类判决</h4><p>新流量进入后：提取特征向量→执行扩散重建→输出标签、置信度和特征重要性。若为攻击，则触发响应。DDIM加速确保实时性，单GPU吞吐达8000 Flow&#x2F;s。</p>
+<h3 id="软件流程与系统逻辑"><a href="#软件流程与系统逻辑" class="headerlink" title="软件流程与系统逻辑"></a>软件流程与系统逻辑</h3><h4 id="整体软件工作流程"><a href="#整体软件工作流程" class="headerlink" title="整体软件工作流程"></a>整体软件工作流程</h4><ol>
+<li><strong>数据接入</strong>：实时抓包或导入数据集，写入Kafka pcap_topic。</li>
+<li><strong>预处理</strong>：CICFlowMeter解析80+特征，发布至flow_topic。</li>
+<li><strong>模型推理</strong>：订阅flow_topic，调用UNetFC-DDPM，输出写入alert_topic。</li>
+<li><strong>分类与记录</strong>：保存标签、置信度、Grad-CAM&#x2F;Shap值特征重要性。</li>
+<li><strong>安全联动</strong>：匹配YAML剧本，执行防火墙&#x2F;EDR动作，支持回滚。</li>
+<li><strong>可视化</strong>：WebSocket实时刷新告警、攻击链图和报告。</li>
+</ol>
+<h4 id="异步多线程执行机制"><a href="#异步多线程执行机制" class="headerlink" title="异步多线程执行机制"></a>异步多线程执行机制</h4><p>采用线程池：采集线程存入队列，处理线程标准化，推理线程批量处理，响应线程下发命令，前端线程更新界面。确保高并发和稳定性。</p>
+<h3 id="系统功能设计"><a href="#系统功能设计" class="headerlink" title="系统功能设计"></a>系统功能设计</h3><ul>
+<li><p><strong>态势感知</strong>：仪表盘显示安全评分、资源监控和流量趋势。</p>
+<p><img src="/img/image-20250816155052522.png" srcset="/img/loading.gif" lazyload alt="态势感知仪表盘"></p>
+</li>
+<li><p><strong>告警管理</strong>：展示攻击类型、风险等级，支持状态分类和筛选。</p>
+<p><img src="/img/image-20250816155111493.png" srcset="/img/loading.gif" lazyload alt="告警管理界面"></p>
+</li>
+<li><p><strong>自动响应</strong>：内置剧本库，支持自定义规则和多级告警。</p>
+<p><img src="/img/image-20250816155120319.png" srcset="/img/loading.gif" lazyload alt="自动响应配置"></p>
+</li>
+<li><p><strong>可视化分析</strong>：攻击链图、时间线、Shapley值解释。</p>
+<p><img src="/img/image-20250816155133683.png" srcset="/img/loading.gif" lazyload alt="可视化分析"></p>
+</li>
+<li><p><strong>日志审计</strong>：记录操作日志，支持查询和导出。</p>
+<p><img src="/img/image-20250816155147444.png" srcset="/img/loading.gif" lazyload alt="日志审计"></p>
+</li>
+<li><p><strong>模型管理</strong>：参数配置、版本切换和状态监控。</p>
+</li>
+<li><p><strong>后端推理</strong>：高并发处理，支持每日数十万条连接。</p>
+</li>
+</ul>
+<h3 id="性能指标与评估"><a href="#性能指标与评估" class="headerlink" title="性能指标与评估"></a>性能指标与评估</h3><p>在CICIDS2017数据集上，九类性能如下：</p>
+<table>
+<thead>
+<tr>
+<th>类别</th>
+<th>精确率</th>
+<th>召回率</th>
+<th>F1分数</th>
+<th>准确率</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Benign</td>
+<td>0.981</td>
+<td>0.964</td>
+<td>0.980</td>
+<td>0.972</td>
+</tr>
+<tr>
+<td>DDoS</td>
+<td>0.980</td>
+<td>0.952</td>
+<td>0.979</td>
+<td>0.966</td>
+</tr>
+<tr>
+<td>DoS</td>
+<td>0.959</td>
+<td>0.934</td>
+<td>0.957</td>
+<td>0.946</td>
+</tr>
+<tr>
+<td>PortScan</td>
+<td>0.963</td>
+<td>0.934</td>
+<td>0.961</td>
+<td>0.948</td>
+</tr>
+<tr>
+<td>Bot</td>
+<td>0.951</td>
+<td>0.924</td>
+<td>0.949</td>
+<td>0.938</td>
+</tr>
+<tr>
+<td>Brute Force</td>
+<td>0.939</td>
+<td>0.925</td>
+<td>0.938</td>
+<td>0.932</td>
+</tr>
+<tr>
+<td>Web</td>
+<td>0.925</td>
+<td>0.904</td>
+<td>0.923</td>
+<td>0.914</td>
+</tr>
+<tr>
+<td>Heartbleed</td>
+<td>0.910</td>
+<td>0.900</td>
+<td>0.909</td>
+<td>0.905</td>
+</tr>
+<tr>
+<td>Infiltration</td>
+<td>0.914</td>
+<td>0.901</td>
+<td>0.913</td>
+<td>0.908</td>
+</tr>
+</tbody></table>
+<p>平均F1&#x3D;0.948。推理延时2.8ms，吞吐4万条&#x2F;秒。与CNN-1D对比，F1提升2.6%，准确率提升2.5%。</p>
+<h2 id="创新说明"><a href="#创新说明" class="headerlink" title="创新说明"></a>创新说明</h2><p>本系统在多个方面实现了技术突破：</p>
+<ol>
+<li><strong>扩散模型在流量检测的首创应用</strong>：传统模型对小样本攻击（如Heartbleed，原始仅11条）识别差。我们通过噪声引导和去噪过程，提升稀有类别学习，F1&gt;0.90，优于CNN和Tree-based方法。</li>
+<li><strong>噪声增强数据管道</strong>：设计可控噪声注入生成”伪异常”样本，结合多任务损失，提升边界样本鲁棒性。小类召回率提升6.4%。</li>
+<li><strong>训练-测试一体化可视化</strong>：集成Loss&#x2F;AUC曲线、ROC&#x2F;PR图、混淆矩阵，支持实时调优。</li>
+<li><strong>多模型对比框架</strong>：横向评估CNN-1D、LSTM、Random Forest、XGBoost，验证扩散模型优势（Precision 0.953 vs. CNN的0.927）。</li>
+<li><strong>SOAR与微服务深度融合</strong>：Kafka驱动检测到处置闭环，解决”垃圾进垃圾出”问题。MTTR缩短至3-4秒，支持插件化扩展。</li>
+</ol>
+<p>这些创新不仅提升了检测精度和响应效率，还增强了系统的可解释性和实用性，为网络安全提供了新范式。</p>
+<h2 id="💡-总结与心得"><a href="#💡-总结与心得" class="headerlink" title="💡 总结与心得"></a>💡 总结与心得</h2><p>这个项目前前后后花了两个月的时间，从算法设计到模型训练，再到最后的前后端设计都依赖ai编程，但同时对深度学习项目有了一个全新的理解，希望下次在有算法支撑或者理论基础的情况下开发一个更实用的系统。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E5%AE%89%E5%85%A8%E9%A1%B9%E7%9B%AE/" class="category-chain-item">安全项目</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" class="print-no-link">#深度学习</a>
+      
+        <a href="/tags/%E5%AE%89%E5%85%A8%E5%B7%A5%E5%85%B7/" class="print-no-link">#安全工具</a>
+      
+        <a href="/tags/%E5%BC%80%E5%8F%91%E5%AE%9E%E8%B7%B5/" class="print-no-link">#开发实践</a>
+      
+        <a href="/tags/%E9%A1%B9%E7%9B%AE%E5%88%86%E4%BA%AB/" class="print-no-link">#项目分享</a>
+      
+    </div>
+  
+</div>
+
+
+              
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/08/18/File-Upload-to-Achieve-Stored-XSS-Attack/" title="XunRuiCMS v4.7.1 - Stored XSS via SVG File Upload">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">XunRuiCMS v4.7.1 - Stored XSS via SVG File Upload</span>
+                        <span class="visible-mobile">Previous</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2023/10/18/CTF%E7%AB%9E%E8%B5%9B%E6%A8%A1%E6%9D%BF/" title="CTF题目解析：【题目名称】">
+                        <span class="hidden-mobile">CTF题目解析：【题目名称】</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>Table of Contents</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Search</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">Keyword</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">Blog works best with JavaScript enabled</div>
+  </noscript>
+</body>
+</html>
