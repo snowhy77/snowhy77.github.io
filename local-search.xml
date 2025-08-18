@@ -97,35 +97,6 @@
   
   
   <entry>
-    <title>Web渗透技术：【技术名称】</title>
-    <link href="/2023/10/18/Web%E6%B8%97%E9%80%8F%E6%A8%A1%E6%9D%BF/"/>
-    <url>/2023/10/18/Web%E6%B8%97%E9%80%8F%E6%A8%A1%E6%9D%BF/</url>
-    
-    <content type="html"><![CDATA[<h2 id="📝-技术概述"><a href="#📝-技术概述" class="headerlink" title="📝 技术概述"></a>📝 技术概述</h2><p>这里简要介绍该Web渗透技术的基本概念和应用场景。</p><span id="more"></span><h2 id="🔍-技术原理"><a href="#🔍-技术原理" class="headerlink" title="🔍 技术原理"></a>🔍 技术原理</h2><h3 id="基本原理"><a href="#基本原理" class="headerlink" title="基本原理"></a>基本原理</h3><p>详细解释该渗透技术的工作原理和技术基础。</p><h3 id="攻击链分析"><a href="#攻击链分析" class="headerlink" title="攻击链分析"></a>攻击链分析</h3><p>分析该技术在整个攻击链中的位置和作用。</p><h2 id="💻-实战演示"><a href="#💻-实战演示" class="headerlink" title="💻 实战演示"></a>💻 实战演示</h2><h3 id="环境准备"><a href="#环境准备" class="headerlink" title="环境准备"></a>环境准备</h3><ul><li>测试环境搭建</li><li>所需工具</li><li>前置条件</li></ul><h3 id="攻击步骤"><a href="#攻击步骤" class="headerlink" title="攻击步骤"></a>攻击步骤</h3><ol><li>第一步：信息收集</li><li>第二步：漏洞识别</li><li>第三步：漏洞利用</li><li>第四步：权限提升</li><li>第五步：后渗透操作</li></ol><h3 id="关键代码"><a href="#关键代码" class="headerlink" title="关键代码"></a>关键代码</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 攻击示例代码</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">web_penetration</span>():<br>    target = <span class="hljs-string">&quot;http://example.com&quot;</span><br>    <span class="hljs-comment"># 执行渗透测试步骤</span><br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;开始渗透测试...&quot;</span>)<br></code></pre></td></tr></table></figure><h2 id="🛡️-防御措施"><a href="#🛡️-防御措施" class="headerlink" title="🛡️ 防御措施"></a>🛡️ 防御措施</h2><h3 id="检测方法"><a href="#检测方法" class="headerlink" title="检测方法"></a>检测方法</h3><p>如何检测此类攻击的发生。</p><h3 id="防御策略"><a href="#防御策略" class="headerlink" title="防御策略"></a>防御策略</h3><ul><li>技术层面防御</li><li>管理层面防御</li><li>应急响应建议</li></ul><h2 id="📊-实际案例"><a href="#📊-实际案例" class="headerlink" title="📊 实际案例"></a>📊 实际案例</h2><table><thead><tr><th>案例</th><th>时间</th><th>影响</th><th>技术特点</th></tr></thead><tbody><tr><td>案例1</td><td>2023年</td><td>严重</td><td>特点描述</td></tr><tr><td>案例2</td><td>2022年</td><td>中等</td><td>特点描述</td></tr></tbody></table><h2 id="🔧-工具推荐"><a href="#🔧-工具推荐" class="headerlink" title="🔧 工具推荐"></a>🔧 工具推荐</h2><ul><li>工具1：<a href="https://example.com/">工具链接</a> - 简要描述</li><li>工具2：<a href="https://example.com/">工具链接</a> - 简要描述</li></ul><h2 id="📚-参考资料"><a href="#📚-参考资料" class="headerlink" title="📚 参考资料"></a>📚 参考资料</h2><ul><li><a href="https://example.com/">参考链接1</a></li><li><a href="https://example.com/">参考链接2</a></li></ul><h2 id="💡-总结与思考"><a href="#💡-总结与思考" class="headerlink" title="💡 总结与思考"></a>💡 总结与思考</h2><p>对该渗透技术的总结评价和未来发展趋势的思考。</p>]]></content>
-    
-    
-    <categories>
-      
-      <category>Web渗透</category>
-      
-    </categories>
-    
-    
-    <tags>
-      
-      <tag>渗透测试</tag>
-      
-      <tag>攻击技术</tag>
-      
-      <tag>Web安全</tag>
-      
-    </tags>
-    
-  </entry>
-  
-  
-  
-  <entry>
     <title>fastjson 1.2.24 反序列化 RCE 漏洞复现(CVE-2017-18349)</title>
     <link href="/2023/10/18/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96-RCE-%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0/"/>
     <url>/2023/10/18/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96-RCE-%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0/</url>
@@ -147,6 +118,35 @@
       <tag>安全研究</tag>
       
       <tag>漏洞利用</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>Web渗透技术：【技术名称】</title>
+    <link href="/2023/10/18/Web%E6%B8%97%E9%80%8F%E6%A8%A1%E6%9D%BF/"/>
+    <url>/2023/10/18/Web%E6%B8%97%E9%80%8F%E6%A8%A1%E6%9D%BF/</url>
+    
+    <content type="html"><![CDATA[<h2 id="📝-技术概述"><a href="#📝-技术概述" class="headerlink" title="📝 技术概述"></a>📝 技术概述</h2><p>这里简要介绍该Web渗透技术的基本概念和应用场景。</p><span id="more"></span><h2 id="🔍-技术原理"><a href="#🔍-技术原理" class="headerlink" title="🔍 技术原理"></a>🔍 技术原理</h2><h3 id="基本原理"><a href="#基本原理" class="headerlink" title="基本原理"></a>基本原理</h3><p>详细解释该渗透技术的工作原理和技术基础。</p><h3 id="攻击链分析"><a href="#攻击链分析" class="headerlink" title="攻击链分析"></a>攻击链分析</h3><p>分析该技术在整个攻击链中的位置和作用。</p><h2 id="💻-实战演示"><a href="#💻-实战演示" class="headerlink" title="💻 实战演示"></a>💻 实战演示</h2><h3 id="环境准备"><a href="#环境准备" class="headerlink" title="环境准备"></a>环境准备</h3><ul><li>测试环境搭建</li><li>所需工具</li><li>前置条件</li></ul><h3 id="攻击步骤"><a href="#攻击步骤" class="headerlink" title="攻击步骤"></a>攻击步骤</h3><ol><li>第一步：信息收集</li><li>第二步：漏洞识别</li><li>第三步：漏洞利用</li><li>第四步：权限提升</li><li>第五步：后渗透操作</li></ol><h3 id="关键代码"><a href="#关键代码" class="headerlink" title="关键代码"></a>关键代码</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 攻击示例代码</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">web_penetration</span>():<br>    target = <span class="hljs-string">&quot;http://example.com&quot;</span><br>    <span class="hljs-comment"># 执行渗透测试步骤</span><br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;开始渗透测试...&quot;</span>)<br></code></pre></td></tr></table></figure><h2 id="🛡️-防御措施"><a href="#🛡️-防御措施" class="headerlink" title="🛡️ 防御措施"></a>🛡️ 防御措施</h2><h3 id="检测方法"><a href="#检测方法" class="headerlink" title="检测方法"></a>检测方法</h3><p>如何检测此类攻击的发生。</p><h3 id="防御策略"><a href="#防御策略" class="headerlink" title="防御策略"></a>防御策略</h3><ul><li>技术层面防御</li><li>管理层面防御</li><li>应急响应建议</li></ul><h2 id="📊-实际案例"><a href="#📊-实际案例" class="headerlink" title="📊 实际案例"></a>📊 实际案例</h2><table><thead><tr><th>案例</th><th>时间</th><th>影响</th><th>技术特点</th></tr></thead><tbody><tr><td>案例1</td><td>2023年</td><td>严重</td><td>特点描述</td></tr><tr><td>案例2</td><td>2022年</td><td>中等</td><td>特点描述</td></tr></tbody></table><h2 id="🔧-工具推荐"><a href="#🔧-工具推荐" class="headerlink" title="🔧 工具推荐"></a>🔧 工具推荐</h2><ul><li>工具1：<a href="https://example.com/">工具链接</a> - 简要描述</li><li>工具2：<a href="https://example.com/">工具链接</a> - 简要描述</li></ul><h2 id="📚-参考资料"><a href="#📚-参考资料" class="headerlink" title="📚 参考资料"></a>📚 参考资料</h2><ul><li><a href="https://example.com/">参考链接1</a></li><li><a href="https://example.com/">参考链接2</a></li></ul><h2 id="💡-总结与思考"><a href="#💡-总结与思考" class="headerlink" title="💡 总结与思考"></a>💡 总结与思考</h2><p>对该渗透技术的总结评价和未来发展趋势的思考。</p>]]></content>
+    
+    
+    <categories>
+      
+      <category>Web渗透</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>渗透测试</tag>
+      
+      <tag>攻击技术</tag>
+      
+      <tag>Web安全</tag>
       
     </tags>
     
