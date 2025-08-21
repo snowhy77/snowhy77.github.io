@@ -4,6 +4,37 @@
   
   
   <entry>
+    <title>Information Disclosure and Source Code Leakage Vulnerability in SeaCMS</title>
+    <link href="/2025/08/21/Information-Disclosure-Vulnerability-in-SeaCMS/"/>
+    <url>/2025/08/21/Information-Disclosure-Vulnerability-in-SeaCMS/</url>
+    
+    <content type="html"><![CDATA[<h1 id="Information-Disclosure-and-Source-Code-Leakage-Vulnerability-in-SeaCMS"><a href="#Information-Disclosure-and-Source-Code-Leakage-Vulnerability-in-SeaCMS" class="headerlink" title="Information Disclosure and Source Code Leakage Vulnerability in SeaCMS"></a>Information Disclosure and Source Code Leakage Vulnerability in SeaCMS</h1><h2 id="Vulnerability-Description"><a href="#Vulnerability-Description" class="headerlink" title="Vulnerability Description"></a>Vulnerability Description</h2><p>A critical information disclosure vulnerability has been discovered in SeaCMS version 13.1. The vulnerability exists in the <code>admin_safe.php</code> component located in the <code>/btcoan/</code> directory. This security flaw allows authenticated administrators to scan and download not only the application’s source code but also potentially any file accessible on the server’s root directory.</p><h2 id="Affected-Product"><a href="#Affected-Product" class="headerlink" title="Affected Product"></a>Affected Product</h2><ul><li><strong>Product</strong>: SeaCMS</li><li><strong>Version</strong>: 13.1</li><li><strong>Component</strong>: Security Scanning Module (<code>/btcoan/admin_safe.php</code>)</li><li><strong>CWE</strong>: CWE-200: Exposure of Sensitive Information to an Unauthorized Actor</li></ul><h2 id="Technical-Details"><a href="#Technical-Details" class="headerlink" title="Technical Details"></a>Technical Details</h2><p>I deployed SeaCMS 13.1 locally using PHPStudy with the access URL <a href="http://seacms.local/btcoan/#">http://seacms.local/btcoan/#</a>. The source code is available at: <a href="https://github.com/seacms-net/CMS">https://github.com/seacms-net/CMS</a></p><p>During security analysis of the administrative interface, I discovered that the security scanning component (<code>admin_safe.php</code>) intended to identify potentially vulnerable files actually exposes the full file content and allows direct download of source code files.</p><p><img src="/img/%E5%B1%8F%E5%B9%95%E6%88%AA%E5%9B%BE%202025-08-21%20163737.png" alt="Security Scanning Interface"></p><h2 id="Proof-of-Concept-PoC"><a href="#Proof-of-Concept-PoC" class="headerlink" title="Proof of Concept (PoC)"></a>Proof of Concept (PoC)</h2><p>After accessing the admin panel and navigating to the security scanning module, I clicked on “Start Scanning” and observed that the system not only identified files but also provided direct download links to their source code:</p><p><img src="/img/image-20250821164151353.png" alt="Source Code Download Options"></p><p>This functionality results in complete exposure of the application’s source code:</p><p><img src="/img/image-20250821164227307.png" alt="Source Code Exposure"></p><p>More critically, the scanning functionality is not properly confined to the application directory. It can traverse and expose files from the entire server root directory, including other applications and potentially sensitive files:</p><p><img src="/img/%E5%B1%8F%E5%B9%95%E6%88%AA%E5%9B%BE%202025-08-21%20164410.png" alt="Directory Traversal and Server-wide Access"></p><p>As demonstrated in the testing environment, this vulnerability allows access to all files within the PHPStudy installation directory, enabling the download of source code from any application hosted on the same server.</p><h2 id="Vulnerable-Code-Analysis"><a href="#Vulnerable-Code-Analysis" class="headerlink" title="Vulnerable Code Analysis"></a>Vulnerable Code Analysis</h2><p>The vulnerability exists in the security scanning component (<code>admin_safe.php</code>), which fails to:</p><ol><li>Properly restrict file access to the application’s directory</li><li>Implement authorization checks for file downloads</li><li>Sanitize file paths to prevent directory traversal</li><li>Restrict access to sensitive application files and configurations</li></ol><p>The core issue appears to be that the security scanning feature, intended to identify security issues, itself becomes a security liability by exposing source code and enabling unrestricted access to server files.</p><h2 id="Impact"><a href="#Impact" class="headerlink" title="Impact"></a>Impact</h2><p>This vulnerability allows attackers with administrative access to:</p><ol><li>Download the entire application source code, exposing business logic, security mechanisms, and potential hardcoded credentials</li><li>Access configuration files that might contain database credentials, API keys, and other sensitive information</li><li>Access files from other applications hosted on the same server</li><li>Gain insights that could facilitate further attacks by understanding the application’s security mechanisms</li></ol><p>While this vulnerability requires administrative access to exploit, it represents a critical security issue as it completely compromises the confidentiality of the application’s source code and potentially exposes other sensitive server information.</p><h2 id="Remediation"><a href="#Remediation" class="headerlink" title="Remediation"></a>Remediation</h2><p>To fix this vulnerability, the application should:</p><ol><li>Restrict file scanning to only display metadata (file names, sizes, permissions) without providing content access</li><li>Implement proper directory isolation to prevent access to files outside the application’s directory</li><li>Add additional authorization checks for security scanning features</li><li>Add logging and monitoring for sensitive administrative operations</li><li>Consider removing or significantly restricting the file download capability from the security scanning module</li></ol><h2 id="Timeline"><a href="#Timeline" class="headerlink" title="Timeline"></a>Timeline</h2><ul><li><strong>2025-08-21</strong>: Vulnerability discovered</li><li><strong>2025-08-21</strong>: Documentation and proof of concept created</li><li><strong>[Future Date]</strong>: Vulnerability reported to vendor</li><li><strong>[Future Date]</strong>: CVE assigned</li></ul>]]></content>
+    
+    
+    <categories>
+      
+      <category>漏洞挖掘</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>漏洞挖掘</tag>
+      
+      <tag>CVE</tag>
+      
+      <tag>Information Disclosure</tag>
+      
+      <tag>Source Code Leakage</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>Stored XSS Vulnerability in Emlog Pro via SVG File Upload</title>
     <link href="/2025/08/21/SVG-File-Upload-XSS-Vulnerability-in-Emlog-Pro/"/>
     <url>/2025/08/21/SVG-File-Upload-XSS-Vulnerability-in-Emlog-Pro/</url>
@@ -188,35 +219,6 @@
   
   
   <entry>
-    <title>Web渗透技术：【技术名称】</title>
-    <link href="/2023/10/18/Web%E6%B8%97%E9%80%8F%E6%A8%A1%E6%9D%BF/"/>
-    <url>/2023/10/18/Web%E6%B8%97%E9%80%8F%E6%A8%A1%E6%9D%BF/</url>
-    
-    <content type="html"><![CDATA[<h2 id="📝-技术概述"><a href="#📝-技术概述" class="headerlink" title="📝 技术概述"></a>📝 技术概述</h2><p>这里简要介绍该Web渗透技术的基本概念和应用场景。</p><span id="more"></span><h2 id="🔍-技术原理"><a href="#🔍-技术原理" class="headerlink" title="🔍 技术原理"></a>🔍 技术原理</h2><h3 id="基本原理"><a href="#基本原理" class="headerlink" title="基本原理"></a>基本原理</h3><p>详细解释该渗透技术的工作原理和技术基础。</p><h3 id="攻击链分析"><a href="#攻击链分析" class="headerlink" title="攻击链分析"></a>攻击链分析</h3><p>分析该技术在整个攻击链中的位置和作用。</p><h2 id="💻-实战演示"><a href="#💻-实战演示" class="headerlink" title="💻 实战演示"></a>💻 实战演示</h2><h3 id="环境准备"><a href="#环境准备" class="headerlink" title="环境准备"></a>环境准备</h3><ul><li>测试环境搭建</li><li>所需工具</li><li>前置条件</li></ul><h3 id="攻击步骤"><a href="#攻击步骤" class="headerlink" title="攻击步骤"></a>攻击步骤</h3><ol><li>第一步：信息收集</li><li>第二步：漏洞识别</li><li>第三步：漏洞利用</li><li>第四步：权限提升</li><li>第五步：后渗透操作</li></ol><h3 id="关键代码"><a href="#关键代码" class="headerlink" title="关键代码"></a>关键代码</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 攻击示例代码</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">web_penetration</span>():<br>    target = <span class="hljs-string">&quot;http://example.com&quot;</span><br>    <span class="hljs-comment"># 执行渗透测试步骤</span><br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;开始渗透测试...&quot;</span>)<br></code></pre></td></tr></table></figure><h2 id="🛡️-防御措施"><a href="#🛡️-防御措施" class="headerlink" title="🛡️ 防御措施"></a>🛡️ 防御措施</h2><h3 id="检测方法"><a href="#检测方法" class="headerlink" title="检测方法"></a>检测方法</h3><p>如何检测此类攻击的发生。</p><h3 id="防御策略"><a href="#防御策略" class="headerlink" title="防御策略"></a>防御策略</h3><ul><li>技术层面防御</li><li>管理层面防御</li><li>应急响应建议</li></ul><h2 id="📊-实际案例"><a href="#📊-实际案例" class="headerlink" title="📊 实际案例"></a>📊 实际案例</h2><table><thead><tr><th>案例</th><th>时间</th><th>影响</th><th>技术特点</th></tr></thead><tbody><tr><td>案例1</td><td>2023年</td><td>严重</td><td>特点描述</td></tr><tr><td>案例2</td><td>2022年</td><td>中等</td><td>特点描述</td></tr></tbody></table><h2 id="🔧-工具推荐"><a href="#🔧-工具推荐" class="headerlink" title="🔧 工具推荐"></a>🔧 工具推荐</h2><ul><li>工具1：<a href="https://example.com/">工具链接</a> - 简要描述</li><li>工具2：<a href="https://example.com/">工具链接</a> - 简要描述</li></ul><h2 id="📚-参考资料"><a href="#📚-参考资料" class="headerlink" title="📚 参考资料"></a>📚 参考资料</h2><ul><li><a href="https://example.com/">参考链接1</a></li><li><a href="https://example.com/">参考链接2</a></li></ul><h2 id="💡-总结与思考"><a href="#💡-总结与思考" class="headerlink" title="💡 总结与思考"></a>💡 总结与思考</h2><p>对该渗透技术的总结评价和未来发展趋势的思考。</p>]]></content>
-    
-    
-    <categories>
-      
-      <category>Web渗透</category>
-      
-    </categories>
-    
-    
-    <tags>
-      
-      <tag>渗透测试</tag>
-      
-      <tag>攻击技术</tag>
-      
-      <tag>Web安全</tag>
-      
-    </tags>
-    
-  </entry>
-  
-  
-  
-  <entry>
     <title>fastjson 1.2.24 反序列化 RCE 漏洞复现(CVE-2017-18349)</title>
     <link href="/2023/10/18/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96-RCE-%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0/"/>
     <url>/2023/10/18/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96-RCE-%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0/</url>
@@ -238,6 +240,35 @@
       <tag>安全研究</tag>
       
       <tag>漏洞利用</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>Web渗透技术：【技术名称】</title>
+    <link href="/2023/10/18/Web%E6%B8%97%E9%80%8F%E6%A8%A1%E6%9D%BF/"/>
+    <url>/2023/10/18/Web%E6%B8%97%E9%80%8F%E6%A8%A1%E6%9D%BF/</url>
+    
+    <content type="html"><![CDATA[<h2 id="📝-技术概述"><a href="#📝-技术概述" class="headerlink" title="📝 技术概述"></a>📝 技术概述</h2><p>这里简要介绍该Web渗透技术的基本概念和应用场景。</p><span id="more"></span><h2 id="🔍-技术原理"><a href="#🔍-技术原理" class="headerlink" title="🔍 技术原理"></a>🔍 技术原理</h2><h3 id="基本原理"><a href="#基本原理" class="headerlink" title="基本原理"></a>基本原理</h3><p>详细解释该渗透技术的工作原理和技术基础。</p><h3 id="攻击链分析"><a href="#攻击链分析" class="headerlink" title="攻击链分析"></a>攻击链分析</h3><p>分析该技术在整个攻击链中的位置和作用。</p><h2 id="💻-实战演示"><a href="#💻-实战演示" class="headerlink" title="💻 实战演示"></a>💻 实战演示</h2><h3 id="环境准备"><a href="#环境准备" class="headerlink" title="环境准备"></a>环境准备</h3><ul><li>测试环境搭建</li><li>所需工具</li><li>前置条件</li></ul><h3 id="攻击步骤"><a href="#攻击步骤" class="headerlink" title="攻击步骤"></a>攻击步骤</h3><ol><li>第一步：信息收集</li><li>第二步：漏洞识别</li><li>第三步：漏洞利用</li><li>第四步：权限提升</li><li>第五步：后渗透操作</li></ol><h3 id="关键代码"><a href="#关键代码" class="headerlink" title="关键代码"></a>关键代码</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 攻击示例代码</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">web_penetration</span>():<br>    target = <span class="hljs-string">&quot;http://example.com&quot;</span><br>    <span class="hljs-comment"># 执行渗透测试步骤</span><br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;开始渗透测试...&quot;</span>)<br></code></pre></td></tr></table></figure><h2 id="🛡️-防御措施"><a href="#🛡️-防御措施" class="headerlink" title="🛡️ 防御措施"></a>🛡️ 防御措施</h2><h3 id="检测方法"><a href="#检测方法" class="headerlink" title="检测方法"></a>检测方法</h3><p>如何检测此类攻击的发生。</p><h3 id="防御策略"><a href="#防御策略" class="headerlink" title="防御策略"></a>防御策略</h3><ul><li>技术层面防御</li><li>管理层面防御</li><li>应急响应建议</li></ul><h2 id="📊-实际案例"><a href="#📊-实际案例" class="headerlink" title="📊 实际案例"></a>📊 实际案例</h2><table><thead><tr><th>案例</th><th>时间</th><th>影响</th><th>技术特点</th></tr></thead><tbody><tr><td>案例1</td><td>2023年</td><td>严重</td><td>特点描述</td></tr><tr><td>案例2</td><td>2022年</td><td>中等</td><td>特点描述</td></tr></tbody></table><h2 id="🔧-工具推荐"><a href="#🔧-工具推荐" class="headerlink" title="🔧 工具推荐"></a>🔧 工具推荐</h2><ul><li>工具1：<a href="https://example.com/">工具链接</a> - 简要描述</li><li>工具2：<a href="https://example.com/">工具链接</a> - 简要描述</li></ul><h2 id="📚-参考资料"><a href="#📚-参考资料" class="headerlink" title="📚 参考资料"></a>📚 参考资料</h2><ul><li><a href="https://example.com/">参考链接1</a></li><li><a href="https://example.com/">参考链接2</a></li></ul><h2 id="💡-总结与思考"><a href="#💡-总结与思考" class="headerlink" title="💡 总结与思考"></a>💡 总结与思考</h2><p>对该渗透技术的总结评价和未来发展趋势的思考。</p>]]></content>
+    
+    
+    <categories>
+      
+      <category>Web渗透</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>渗透测试</tag>
+      
+      <tag>攻击技术</tag>
+      
+      <tag>Web安全</tag>
       
     </tags>
     
