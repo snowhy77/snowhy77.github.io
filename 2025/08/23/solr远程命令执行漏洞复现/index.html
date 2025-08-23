@@ -1,0 +1,790 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="rgba(71, 46, 98, 0.8)">
+  <meta name="author" content="kyrie711-wq">
+  <meta name="keywords" content="博客,技术,笔记">
+  
+    <meta name="description" content="solr 远程命令执行 (CVE-2019-17558)漏洞复现一、报告目的1.1 报告对象系统安全运维人员：该报告提供了 Apache Solr 中 CVE-2019-17558 漏洞的详细复现过程，可以帮助运维人员理解漏洞的特性，识别系统是否受到影响，并采取相应的安全加固措施。 渗透测试人员：报告展示了漏洞的利用方法和攻击特征，有助于渗透测试人员了解如何验证目标系统的漏洞是否存在，并模拟攻击进">
+<meta property="og:type" content="article">
+<meta property="og:title" content="solr 远程命令执行 (CVE-2019-17558)漏洞复现">
+<meta property="og:url" content="https://kyrie711-wq.github.io/2025/08/23/solr%E8%BF%9C%E7%A8%8B%E5%91%BD%E4%BB%A4%E6%89%A7%E8%A1%8C%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0/index.html">
+<meta property="og:site_name" content="我的博客">
+<meta property="og:description" content="solr 远程命令执行 (CVE-2019-17558)漏洞复现一、报告目的1.1 报告对象系统安全运维人员：该报告提供了 Apache Solr 中 CVE-2019-17558 漏洞的详细复现过程，可以帮助运维人员理解漏洞的特性，识别系统是否受到影响，并采取相应的安全加固措施。 渗透测试人员：报告展示了漏洞的利用方法和攻击特征，有助于渗透测试人员了解如何验证目标系统的漏洞是否存在，并模拟攻击进">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://kyrie711-wq.github.io/img/wps7-1755936631061-6.jpg">
+<meta property="article:published_time" content="2025-08-22T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-08-23T08:43:01.359Z">
+<meta property="article:author" content="kyrie711-wq">
+<meta property="article:tag" content="漏洞复现">
+<meta property="article:tag" content="solr">
+<meta property="article:tag" content="远程命令执行">
+<meta property="article:tag" content="CVE-2019-17558">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://kyrie711-wq.github.io/img/wps7-1755936631061-6.jpg">
+  
+  
+  
+  <title>solr 远程命令执行 (CVE-2019-17558)漏洞复现 - 我的博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/custom.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"kyrie711-wq.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>我的博客</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>Home</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>Archives</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/%E5%AE%89%E5%85%A8%E9%A1%B9%E7%9B%AE/" target="_self">
+                <i class="iconfont icon-app"></i>
+                <span>安全项目</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98/" target="_self">
+                <i class="iconfont icon-bug-fill"></i>
+                <span>漏洞挖掘</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/CTF%E7%AB%9E%E8%B5%9B/" target="_self">
+                <i class="iconfont icon-flag-fill"></i>
+                <span>CTF竞赛</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/Web%E6%B8%97%E9%80%8F/" target="_self">
+                <i class="iconfont icon-windows-fill"></i>
+                <span>Web渗透</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>Tags</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>About</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/vdysjx.webp') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="solr 远程命令执行 (CVE-2019-17558)漏洞复现"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-08-23 00:00" pubdate>
+          August 23, 2025 am
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.6k words
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          30 mins
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">solr 远程命令执行 (CVE-2019-17558)漏洞复现</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="solr-远程命令执行-CVE-2019-17558-漏洞复现"><a href="#solr-远程命令执行-CVE-2019-17558-漏洞复现" class="headerlink" title="solr 远程命令执行 (CVE-2019-17558)漏洞复现"></a>solr 远程命令执行 (CVE-2019-17558)漏洞复现</h1><h2 id="一、报告目的"><a href="#一、报告目的" class="headerlink" title="一、报告目的"></a>一、报告目的</h2><h3 id="1-1-报告对象"><a href="#1-1-报告对象" class="headerlink" title="1.1 报告对象"></a>1.1 报告对象</h3><p>系统安全运维人员：该报告提供了 Apache Solr 中 CVE-2019-17558 漏洞的详细复现过程，可以帮助运维人员理解漏洞的特性，识别系统是否受到影响，并采取相应的安全加固措施。</p>
+<p>渗透测试人员：报告展示了漏洞的利用方法和攻击特征，有助于渗透测试人员了解如何验证目标系统的漏洞是否存在，并模拟攻击进行漏洞评估。</p>
+<p>开发团队：本报告详细分析了漏洞的根源和影响，开发团队可以借此了解如何在未来的开发过程中避免类似的安全问题，提升代码的安全性。</p>
+<p>管理层人员：对于关注公司网络安全、IT架构安全的管理人员，本报告提供了该漏洞可能带来的安全风险评估和危害分析，帮助管理层做出安全决策。</p>
+<h3 id="1-2-报告目的"><a href="#1-2-报告目的" class="headerlink" title="1.2 报告目的"></a>1.2 报告目的</h3><p>本报告的目的在于分析和复现 Apache Solr 中的远程代码执行漏洞（CVE-2019-17558）。报告通过漏洞复现过程展示漏洞存在的风险，提供相应的攻击方式和应对措施，为相关技术人员提供必要的修复建议。</p>
+<h3 id="1-3-报告评价"><a href="#1-3-报告评价" class="headerlink" title="1.3 报告评价"></a>1.3 报告评价</h3><p>读者通过阅读本报告，应该能获得以下评价与收获：</p>
+<p>安全意识提升： 读者将对 CVE-2019-17558 漏洞的性质有清晰的理解，能够认识到即使是看似不起眼的配置错误也可能导致严重的远程代码执行风险，从而提升日常开发和运维过程中的安全意识。</p>
+<p>漏洞识别能力增强： 通过报告中的漏洞复现过程，读者能够掌握如何识别类似的漏洞并采取相应的防护措施，增强渗透测试和漏洞检测的能力。</p>
+<p>实际操作经验： 渗透测试人员和安全运维人员能够通过报告中提供的实际攻击步骤和漏洞利用方法，获得实战操作经验，提升应对实际攻击的能力。</p>
+<p>修复和防御措施指导： 通过具体的修复建议，读者能够在自己的系统中迅速定位问题并采取措施修复漏洞，防止类似漏洞的发生，提升系统的安全性。</p>
+<h2 id="二、实验原理"><a href="#二、实验原理" class="headerlink" title="二、实验原理"></a>二、实验原理</h2><h3 id="漏洞背景"><a href="#漏洞背景" class="headerlink" title="漏洞背景"></a>漏洞背景</h3><ol>
+<li>Apache Solr 是一个开源的搜索平台，广泛用于企业级搜索应用。</li>
+<li>Velocity 模板引擎 是一种用于在应用程序中生成动态内容的工具，Solr 使用它来处理一些请求和响应的渲染。</li>
+<li>通过 Velocity 模板注入，攻击者可以在 Solr 请求中嵌入恶意模板，利用 Solr 系统中的执行环境来运行任意 Java 代码。</li>
+</ol>
+<h3 id="漏洞触发条件"><a href="#漏洞触发条件" class="headerlink" title="漏洞触发条件"></a>漏洞触发条件</h3><ol>
+<li>params.resource.loader.enabled 配置项默认为 false，但它可以被恶意请求修改为 true，这样 Solr 就允许外部加载资源文件。</li>
+<li>通过构造带有恶意 Velocity 模板的请求，攻击者能够绕过系统的安全限制，执行任意的 Java 代码。</li>
+</ol>
+<h3 id="漏洞利用流程"><a href="#漏洞利用流程" class="headerlink" title="漏洞利用流程"></a>漏洞利用流程</h3><ol>
+<li>攻击者首先需要访问 Solr 的某个特定端点，通常是 &#x2F;select 或 &#x2F;update，并且能够在请求中插入任意的查询参数。</li>
+<li>在 CVE-2019-17558 中，攻击者利用 Solr 的 wt&#x3D;velocity（Velocity 渲染模板）参数和恶意的模板参数来构造请求。</li>
+<li>恶意模板注入：攻击者通过构造请求将恶意的 Velocity 模板注入到请求参数中，使得服务器在处理请求时执行这些模板，达到执行任意代码的目的。</li>
+</ol>
+<h2 id="三、漏洞详细情况说明"><a href="#三、漏洞详细情况说明" class="headerlink" title="三、漏洞详细情况说明"></a>三、漏洞详细情况说明</h2><h3 id="3-1-影响范围"><a href="#3-1-影响范围" class="headerlink" title="3.1 影响范围"></a>3.1 影响范围</h3><p><strong>受影响的版本：</strong></p>
+<p>此漏洞影响 Apache Solr 5.0.0 至 8.3.1 版本。只有在使用 Velocity Response Writer 的场景下，且相关配置项（例如 params.resource.loader.enabled 和 solr.resource.loader.enabled）被错误地启用时，漏洞才会被触发。</p>
+<p><strong>配置和部署条件：</strong></p>
+<p>仅在 Velocity 模板引擎被启用，并允许外部资源加载的情况下，攻击者才能利用该漏洞。因此，默认配置下风险较低，但许多用户为了扩展功能或调试时可能会手动修改配置，从而引入安全隐患。</p>
+<p><strong>可能受影响的系统：</strong></p>
+<ul>
+<li>搜索和数据索引系统： 依赖 Apache Solr 进行搜索和数据索引的企业应用。</li>
+<li>企业级搜索解决方案： 部署在企业内部或面向公网的搜索平台。</li>
+<li>Web 应用和大数据平台： 集成 Solr 服务的 Web 应用或大数据处理系统，尤其是那些直接对外开放的服务。</li>
+</ul>
+<p><strong>潜在风险与后果：</strong></p>
+<p>漏洞可导致远程代码执行，使攻击者能够在受影响的服务器上执行任意命令，进而可能获取系统权限。</p>
+<p>如果 Solr 实例部署在公共网络或缺乏有效访问控制，攻击者利用该漏洞可以轻易突破防御，造成数据泄露、服务中断或系统完全失控。</p>
+<h3 id="3-2-评分"><a href="#3-2-评分" class="headerlink" title="3.2 评分"></a>3.2 评分</h3><p>CVE-2019-17558 漏洞的 CVSS v3.0 评分为 8.8，属于高风险漏洞，建议尽快修复该漏洞，特别是系统暴露在公共网络上时。</p>
+<h3 id="3-3-漏洞详情"><a href="#3-3-漏洞详情" class="headerlink" title="3.3 漏洞详情"></a>3.3 漏洞详情</h3><p>CVE-2019-17558 是一个影响 Apache Solr 的远程代码执行漏洞，存在于 Velocity 模板引擎的配置中。攻击者通过构造恶意请求，利用未正确禁用的外部资源加载器，注入 Velocity 模板并执行任意 Java 代码。此漏洞影响 Apache Solr 版本 5.0.0 至 8.3.1，允许攻击者远程执行命令、获取敏感信息或完全控制受影响系统。修复方法是升级 Solr 至 8.4.0 及更高版本，并禁用外部资源加载器。</p>
+<h2 id="四、漏洞存在条件"><a href="#四、漏洞存在条件" class="headerlink" title="四、漏洞存在条件"></a>四、漏洞存在条件</h2><p>Velocity 模板引擎启用：Solr 必须启用 Velocity 模板引擎来处理请求，特别是 wt&#x3D;velocity（Velocity 响应类型）配置项被使用时。</p>
+<p>外部资源加载器未禁用：Solr 配置中的 params.resource.loader.enabled 或 solr.resource.loader.enabled 设置为 true，允许加载外部资源文件。这使得攻击者能够通过构造恶意请求，加载并执行未经授权的 Velocity 模板。</p>
+<p>使用的 Solr 版本：漏洞存在于 Apache Solr 版本 5.0.0 至 8.3.1 中。没有及时升级的系统容易受到该漏洞的影响。</p>
+<h2 id="五、实验工具"><a href="#五、实验工具" class="headerlink" title="五、实验工具"></a>五、实验工具</h2><p>Windows攻击机（192.168.144.138）<br>Kali2024靶机（192.168.1144.140）</p>
+<h2 id="六、漏洞复现参考资料"><a href="#六、漏洞复现参考资料" class="headerlink" title="六、漏洞复现参考资料"></a>六、漏洞复现参考资料</h2><p><a target="_blank" rel="noopener" href="https://blog.csdn.net/YouthBelief/article/details/121083848?spm=1001.2101.3001.6650.12&utm_medium=distribute.pc_relevant.none-task-blog-2~default~BlogCommendFromBaidu~Rate-12-121083848-blog-143815528.235%5Ev43%5Epc_blog_bottom_relevance_base3&depth_1">https://blog.csdn.net/YouthBelief/article/details/121083848?spm=1001.2101.3001.6650.12&amp;utm_medium&#x3D;distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7ERate-12-121083848-blog-143815528.235%5Ev43%5Epc_blog_bottom_relevance_base3&amp;depth_1</a></p>
+<h2 id="七、操作过程"><a href="#七、操作过程" class="headerlink" title="七、操作过程"></a>七、操作过程</h2><h3 id="1-拉取CVE-2019-17558复现环境"><a href="#1-拉取CVE-2019-17558复现环境" class="headerlink" title="1.拉取CVE-2019-17558复现环境"></a>1.拉取CVE-2019-17558复现环境</h3><p>在靶机对应的漏洞文件夹下运行docker compose up</p>
+<p><img src="/img/wps1-1755936631060-1.jpg" srcset="/img/loading.gif" lazyload alt="运行docker compose up"></p>
+<p>运行docker ps可查看容器运行情况</p>
+<p><img src="/img/wps2-1755936631061-2.jpg" srcset="/img/loading.gif" lazyload alt="查看容器状态"></p>
+<p>由图可知，容器成功运行在本机8983端口</p>
+<h3 id="2-信息收集"><a href="#2-信息收集" class="headerlink" title="2.信息收集"></a>2.信息收集</h3><p>在攻击机中利用fscan 运行命令：fscan.exe -h 192.168.144.140</p>
+<p><img src="/img/wps3-1755936631061-4.jpg" srcset="/img/loading.gif" lazyload alt="fscan扫描结果"></p>
+<p>发现靶机的开放了两个端口分别是8983和8834</p>
+<p>接着用nmap扫描开放的端口的对应服务</p>
+<p><img src="/img/wps4-1755936631061-3.jpg" srcset="/img/loading.gif" lazyload alt="nmap扫描结果"></p>
+<p>发现8983端口的对应服务为apache solr,即可确定渗透注入点</p>
+<p>用dirsearch运行命令： dirsearch -u <a href="http://192.168.144.140:8983，进行目录探测">http://192.168.144.140:8983，进行目录探测</a></p>
+<p><img src="/img/wps5-1755936631061-7.jpg" srcset="/img/loading.gif" lazyload alt="目录探测结果"></p>
+<p>在浏览器中进行访问，并没有发现明显漏洞注入点</p>
+<h3 id="3-漏洞利用"><a href="#3-漏洞利用" class="headerlink" title="3.漏洞利用"></a>3.漏洞利用</h3><p>默认情况下params.resource.loader.enabled配置未打开，无法使用自定义模板。可以先通过如下API获取所有的核心</p>
+<p>在vulhub中核心就是demo</p>
+<p>通过下边API获取所有内核名称</p>
+<p><a target="_blank" rel="noopener" href="http://118.193.36.37:8468/solr/admin/cores?indexInfo=false&wt=json">http://118.193.36.37:8468/solr/admin/cores?indexInfo=false&amp;wt=json</a></p>
+<p><img src="/img/wps6-1755936631061-5.jpg" srcset="/img/loading.gif" lazyload alt="获取核心名称"></p>
+<p>在url访问&#x2F;solr&#x2F;demo&#x2F;config</p>
+<p><img src="/img/wps7-1755936631061-6.jpg" srcset="/img/loading.gif" lazyload alt="访问配置"></p>
+<p>发现状态码为400，即访问失败</p>
+<p>启用配置 params.resource.loader.enabled 为true，在url访问&#x2F;solr&#x2F;demo&#x2F;config，burpsuit抓包</p>
+<p><img src="/img/wps8-1755936631061-8.jpg" srcset="/img/loading.gif" lazyload alt="burpsuit抓包"></p>
+<p>改成POST然后修改启动配置，修改请求体</p>
+<p><img src="/img/wps9-1755936631061-9.jpg" srcset="/img/loading.gif" lazyload alt="修改请求"></p>
+<p>最后发现页面成功回显</p>
+<p><img src="/img/wps10-1755936631061-10.jpg" srcset="/img/loading.gif" lazyload alt="成功回显"></p>
+<p>成功将启用配置 params.resource.loader.enabled 为true</p>
+<p>利用hackbar插件注入 Velocity 模板即可执行任意命令</p>
+<p><img src="/img/wps11-1755936631061-11.jpg" srcset="/img/loading.gif" lazyload alt="执行命令"></p>
+<p>最终成功执行ls命令，得到所有隐私目录</p>
+<h2 id="八、数据分析"><a href="#八、数据分析" class="headerlink" title="八、数据分析"></a>八、数据分析</h2><h3 id="8-1-流量分析"><a href="#8-1-流量分析" class="headerlink" title="8.1 流量分析"></a>8.1 流量分析</h3><p>在利用攻击机进行攻击时，我打开wireshark抓包，并存储在csv文件中</p>
+<p><img src="/img/wps12-1755936631061-12.jpg" srcset="/img/loading.gif" lazyload alt="抓包数据1"></p>
+<p><img src="/img/wps13-1755936631061-13.jpg" srcset="/img/loading.gif" lazyload alt="抓包数据2"></p>
+<p><strong>通过对每一条数据包的分析，可以发现该攻击方式的流量特征：</strong></p>
+<ol>
+<li>目标端口固定</li>
+</ol>
+<p>流量主要集中在源端口 50373、50376 与目的端口 8983 之间的通信，8983 端口通常是 Solr 服务的默认端口，这表明攻击者的目标明确指向 Solr 服务。</p>
+<ol start="2">
+<li>攻击请求特征</li>
+</ol>
+<p>多次出现包含恶意参数的 HTTP GET 请求，请求路径为 &#x2F;solr&#x2F;demo&#x2F;select，且带有 wt&#x3D;velocity 和 v.template&#x3D;custom 参数，这是利用 Solr 的 Velocity 模板注入漏洞（CVE - 2019 - 17558）的典型特征。请求中还包含通过反射调用 java.lang.Runtime 类并执行系统命令（如 ls）的代码</p>
+<ol start="3">
+<li>请求频率较高</li>
+</ol>
+<p>在短时间内（如 1.055052 秒和 1.518454 秒）出现多次相同的攻击请求，这可能是攻击者在尝试不同的命令或者确认攻击是否成功，体现了攻击者试图利用漏洞的急切性</p>
+<ol start="4">
+<li>响应状态正常</li>
+</ol>
+<p>针对攻击请求，服务器返回了 HTTP&#x2F;1.1 200 OK 的响应，说明服务器正常处理了请求，但这并不意味着攻击未成功，有可能攻击代码已经在服务器端执行。</p>
+<ol start="5">
+<li>存在 TCP Keep - Alive 机制</li>
+</ol>
+<p>在攻击过程中，存在大量的 TCP Keep - Alive 数据包，用于维持连接的有效性，这有助于攻击者在较长时间内持续进行攻击或者获取攻击结果。例如：</p>
+<h3 id="8-2-日志分析"><a href="#8-2-日志分析" class="headerlink" title="8.2 日志分析"></a>8.2 日志分析</h3><p>我在靶机查看了docker的行为日志，并把日志保存在文件log.txt</p>
+<p><img src="/img/wps14-1755936631061-14.jpg" srcset="/img/loading.gif" lazyload alt="日志分析"></p>
+<p><strong>日志特征</strong></p>
+<p><strong>1.Velocity 模板注入痕迹</strong></p>
+<p>ERROR [qtp1947426831-24] o.a.s.s.SolrDispatchFilter handleException] org.apache.velocity.exception.MethodInvocationException: Invocation of method ‘exec’ in class ‘java.lang.Runtime’ failed</p>
+<p>分析：攻击 Payload 通过v.template&#x3D;custom参数注入 Velocity 代码，若执行失败（如命令语法错误），Solr 会记录 Velocity 引擎抛出的异常。</p>
+<p><strong>2.反射调用异常</strong></p>
+<p>Caused by: java.lang.NoSuchMethodException: java.lang.Runtime.exec([Ljava.lang.String;)java.lang.Process</p>
+<p>分析：攻击 Payload 通过反射调用java.lang.Runtime.exec执行命令，若参数格式错误（如缺少数组括号），会触发NoSuchMethodException。</p>
+<p><strong>3.命令执行失败记录</strong></p>
+<p>java.io.IOException: Cannot run program “ls”: error&#x3D;2, No such file or directory</p>
+<p>分析：若攻击尝试执行不存在的命令（如ls拼写错误），会触发IOException。</p>
+<p><strong>4.高频率异常请求</strong></p>
+<p>WARN  [qtp1947426831-24] o.a.s.s.SolrDispatchFilter handleException] org.apache.solr.common.SolrException: org.apache.velocity.exception.ParseErrorException: Encountered “ <VARIABLE> “v.template” “ at line 1, column 10.</p>
+<p>分析：攻击尝试多次发送含错误参数的请求，导致 Solr 记录高频异常。</p>
+<h3 id="8-3-漏洞利用行为总结"><a href="#8-3-漏洞利用行为总结" class="headerlink" title="8.3 漏洞利用行为总结"></a>8.3 漏洞利用行为总结</h3><p><strong>针对漏洞利用过程中的流量和服务器日志进行发现，总结漏洞利用过程中行为特征如下：</strong></p>
+<p><strong>1.目标探测与配置确认</strong></p>
+<p>攻击者首先探测目标 Apache Solr 实例是否启用了 Velocity 模板响应功能，并确认是否存在错误配置（例如允许外部资源加载器）。</p>
+<p><strong>2.构造恶意请求</strong></p>
+<p>利用已知漏洞，攻击者构造包含恶意 Velocity 模板代码的 HTTP 请求，该请求中通常包含参数 wt&#x3D;velocity 和 v.template.custom。通过这些参数，攻击者将恶意代码注入到模板中。</p>
+<p><strong>3.远程代码执行</strong></p>
+<p>当 Solr 服务器处理该请求时，Velocity 模板引擎解析并执行注入的恶意代码，从而实现任意 Java 代码的执行。此步骤使攻击者能够执行系统命令、读取敏感信息或完全接管服务器。</p>
+<p><strong>4.后续利用</strong></p>
+<p>成功利用漏洞后，攻击者可以进一步渗透系统，获取更多权限，甚至在服务器上部署后门，实现长时间的控制和数据窃取。</p>
+<h2 id="九、漏洞修复建议"><a href="#九、漏洞修复建议" class="headerlink" title="九、漏洞修复建议"></a>九、漏洞修复建议</h2><h3 id="1-升级-Apache-Solr-版本："><a href="#1-升级-Apache-Solr-版本：" class="headerlink" title="1.升级 Apache Solr 版本："></a>1.升级 Apache Solr 版本：</h3><p>最直接的修复方式是升级到 Apache Solr 8.4.0 或更高版本，因为这些版本已修复该漏洞，并加强了 Velocity 模板引擎的配置，阻止了外部资源加载和模板注入。</p>
+<h3 id="2-禁用-Velocity-模板功能："><a href="#2-禁用-Velocity-模板功能：" class="headerlink" title="2.禁用 Velocity 模板功能："></a>2.禁用 Velocity 模板功能：</h3><p>如果不需要使用 Velocity 模板引擎，最好禁用相关功能，防止潜在的利用风险。可以通过修改 solrconfig.xml 文件，确保 wt&#x3D;velocity 参数不被启用。</p>
+<h3 id="3-配置限制和访问控制："><a href="#3-配置限制和访问控制：" class="headerlink" title="3.配置限制和访问控制："></a>3.配置限制和访问控制：</h3><p>限制访问：通过防火墙或访问控制列表（ACL）限制对 Solr 服务的访问，仅允许可信的内部或外部 IP 访问。避免公开暴露 Solr 服务，特别是在互联网环境中。</p>
+<p>应用访问控制：确保只有授权的用户可以执行特定操作，防止未经授权的用户访问敏感功能。</p>
+<h3 id="4-安全配置审查："><a href="#4-安全配置审查：" class="headerlink" title="4.安全配置审查："></a>4.安全配置审查：</h3><p>定期检查 Solr 配置，确保所有安全选项已启用，并且没有过时的默认配置（如开启 Velocity 模板引擎）。</p>
+<p>确保服务器的操作系统和 Java 环境也保持最新，以减少其他潜在的安全漏洞。</p>
+<h3 id="5-监控和日志审计："><a href="#5-监控和日志审计：" class="headerlink" title="5.监控和日志审计："></a>5.监控和日志审计：</h3><p>开启日志记录功能，确保可以跟踪所有的请求和响应，特别是 HTTP 请求中包含 wt&#x3D;velocity 或其他可疑参数时。</p>
+<p>使用监控工具检测异常行为，及时识别并响应可能的攻击。</p>
+<h3 id="6-补丁管理和安全扫描："><a href="#6-补丁管理和安全扫描：" class="headerlink" title="6.补丁管理和安全扫描："></a>6.补丁管理和安全扫描：</h3><p>及时应用所有官方发布的安全补丁，并使用安全扫描工具定期检查系统中是否存在已知漏洞。</p>
+<p>关注 Apache Solr 项目的安全公告，确保及时跟进修复建议。</p>
+<h2 id="十、总结"><a href="#十、总结" class="headerlink" title="十、总结"></a>十、总结</h2><p>本次实验复现了Solr远程代码执行漏洞。实验中启用模板构造恶意请求，实现远程命令执行。结果显示漏洞可窃取敏感信息并控制系统。验证提醒用户及时更新系统或关闭无用功能，强化防护，确保为漏洞修复提供充分依据。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98/" class="category-chain-item">漏洞挖掘</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0/" class="print-no-link">#漏洞复现</a>
+      
+        <a href="/tags/solr/" class="print-no-link">#solr</a>
+      
+        <a href="/tags/%E8%BF%9C%E7%A8%8B%E5%91%BD%E4%BB%A4%E6%89%A7%E8%A1%8C/" class="print-no-link">#远程命令执行</a>
+      
+        <a href="/tags/CVE-2019-17558/" class="print-no-link">#CVE-2019-17558</a>
+      
+    </div>
+  
+</div>
+
+
+              
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/08/23/Redis4-unacc%E6%9C%AA%E6%8E%88%E6%9D%83%E8%AE%BF%E9%97%AE%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0/" title="Redis4-unacc未授权访问漏洞复现">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Redis4-unacc未授权访问漏洞复现</span>
+                        <span class="visible-mobile">Previous</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/08/22/Stored-XSS-Vulnerability-in-MetInfo-Webset-Module/" title="Stored XSS Vulnerability in MetInfo CMS Webset Module via SVG Upload">
+                        <span class="hidden-mobile">Stored XSS Vulnerability in MetInfo CMS Webset Module via SVG Upload</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>Table of Contents</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Search</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">Keyword</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">Blog works best with JavaScript enabled</div>
+  </noscript>
+</body>
+</html>
