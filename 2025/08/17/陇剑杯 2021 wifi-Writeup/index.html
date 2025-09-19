@@ -1,0 +1,716 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="rgba(71, 46, 98, 0.8)">
+  <meta name="author" content="kyrie711-wq">
+  <meta name="keywords" content="博客,技术,笔记">
+  
+    <meta name="description" content="本篇将分享 [陇剑杯 2021] “wifi” 题目的解题思路。 题目提供了三个文件：客户端流量包、服务端流量包和一个内存镜像。 1. 分析服务器流量，锁定哥斯拉 Webshell首先，我用 Wireshark 打开了服务端流量包，很快就注意到一个可疑的文件上传数据包。 ![发现可疑文件上传包](&#x2F;img&#x2F;屏幕截图 2025-07-28 164439.png) 为了看清里面到底">
+<meta property="og:type" content="article">
+<meta property="og:title" content="陇剑杯 2021 wifi-Writeup">
+<meta property="og:url" content="https://kyrie711-wq.github.io/2025/08/17/%E9%99%87%E5%89%91%E6%9D%AF%202021%20wifi-Writeup/index.html">
+<meta property="og:site_name" content="我的博客">
+<meta property="og:description" content="本篇将分享 [陇剑杯 2021] “wifi” 题目的解题思路。 题目提供了三个文件：客户端流量包、服务端流量包和一个内存镜像。 1. 分析服务器流量，锁定哥斯拉 Webshell首先，我用 Wireshark 打开了服务端流量包，很快就注意到一个可疑的文件上传数据包。 ![发现可疑文件上传包](&#x2F;img&#x2F;屏幕截图 2025-07-28 164439.png) 为了看清里面到底">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://kyrie711-wq.github.io/img/image-20250728164601225.png">
+<meta property="og:image" content="https://kyrie711-wq.github.io/img/image-20250728165315291.png">
+<meta property="og:image" content="https://kyrie711-wq.github.io/img/image-20250728165908423.png">
+<meta property="og:image" content="https://kyrie711-wq.github.io/img/image-20250728171922516.png">
+<meta property="og:image" content="https://kyrie711-wq.github.io/img/image-20250728172547439.png">
+<meta property="og:image" content="https://kyrie711-wq.github.io/img/image-20250728172705356.png">
+<meta property="og:image" content="https://kyrie711-wq.github.io/img/image-20250728173419607.png">
+<meta property="og:image" content="https://kyrie711-wq.github.io/img/image-20250728173513471.png">
+<meta property="article:published_time" content="2025-08-17T02:00:00.000Z">
+<meta property="article:modified_time" content="2025-09-19T05:58:13.117Z">
+<meta property="article:author" content="kyrie711-wq">
+<meta property="article:tag" content="CTF">
+<meta property="article:tag" content="WriteUp">
+<meta property="article:tag" content="陇剑杯">
+<meta property="article:tag" content="内存取证">
+<meta property="article:tag" content="流量分析">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://kyrie711-wq.github.io/img/image-20250728164601225.png">
+  
+  
+  
+  <title>陇剑杯 2021 wifi-Writeup - 我的博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/custom.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"kyrie711-wq.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>我的博客</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>Home</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>Archives</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/%E5%AE%89%E5%85%A8%E9%A1%B9%E7%9B%AE/" target="_self">
+                <i class="iconfont icon-app"></i>
+                <span>安全项目</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98/" target="_self">
+                <i class="iconfont icon-bug-fill"></i>
+                <span>漏洞挖掘</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/CTF%E7%AB%9E%E8%B5%9B/" target="_self">
+                <i class="iconfont icon-flag-fill"></i>
+                <span>CTF竞赛</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/Web%E6%B8%97%E9%80%8F/" target="_self">
+                <i class="iconfont icon-windows-fill"></i>
+                <span>Web渗透</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>Tags</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>About</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/vdysjx.webp') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="陇剑杯 2021 wifi-Writeup"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-08-17 10:00" pubdate>
+          August 17, 2025 am
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          860 words
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          8 mins
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">陇剑杯 2021 wifi-Writeup</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>本篇将分享 [陇剑杯 2021] “wifi” 题目的解题思路。</p>
+<p>题目提供了三个文件：客户端流量包、服务端流量包和一个内存镜像。</p>
+<h3 id="1-分析服务器流量，锁定哥斯拉-Webshell"><a href="#1-分析服务器流量，锁定哥斯拉-Webshell" class="headerlink" title="1. 分析服务器流量，锁定哥斯拉 Webshell"></a>1. 分析服务器流量，锁定哥斯拉 Webshell</h3><p>首先，我用 Wireshark 打开了服务端流量包，很快就注意到一个可疑的文件上传数据包。</p>
+<p>![发现可疑文件上传包](&#x2F;img&#x2F;屏幕截图 2025-07-28 164439.png)</p>
+<p>为了看清里面到底是什么，我追踪了它的 HTTP 流。</p>
+<p><img src="/img/image-20250728164601225.png" srcset="/img/loading.gif" lazyload alt="追踪 HTTP 会话数据"></p>
+<p>在会话数据中，我发现了一段经过层层编码的 Payload。这种 <code>eval(base64_decode(strrev(urldecode(...))))</code> 的结构是典型的哥斯拉 Webshell（Godzilla）的通信特征。</p>
+<p>![发现加密 Payload](&#x2F;img&#x2F;屏幕截图 2025-07-28 164744.png)</p>
+<p>通过解码，我确认了这是一个哥斯拉 <code>php_eval_xor_base64</code> 变种的 Webshell。</p>
+<p><img src="/img/image-20250728165315291.png" srcset="/img/loading.gif" lazyload alt="解码后的 Webshell 源码"></p>
+<h3 id="2-内存取证，提取-WiFi-凭据"><a href="#2-内存取证，提取-WiFi-凭据" class="headerlink" title="2. 内存取证，提取 WiFi 凭据"></a>2. 内存取证，提取 WiFi 凭据</h3><p>既然有 Webshell，那么客户端和服务器之间必定有通信。我打开客户端流量包，发现流量被 WPA2 加密了。要解密，就必须找到 WiFi 的 SSID 和密码。从流量包中，我可以轻松看到 SSID 是 “My_Wifi”。</p>
+<p><img src="/img/image-20250728165908423.png" srcset="/img/loading.gif" lazyload alt="发现 WiFi SSID"></p>
+<p>密码去哪找呢？这时候，内存镜像文件就派上用场了。我使用 Volatility 3 来分析这个 Windows 7 的内存镜像。首先，获取系统基本信息。</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs powershell">python vol.py <span class="hljs-operator">-f</span> <span class="hljs-string">&quot;Windows 7-dde00fa9.vmem&quot;</span> windows.info<br></code></pre></td></tr></table></figure>
+
+<p>![获取系统信息](&#x2F;img&#x2F;屏幕截图 2025-07-28 112658.png)</p>
+<p>接着，我用 <code>filescan</code> 插件在内存中搜索与 “My_Wifi” 相关的文件。</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs powershell"><span class="hljs-variable">$env:PYTHONIOENCODING</span> = <span class="hljs-string">&quot;utf-8&quot;</span><br>python vol.py <span class="hljs-operator">-f</span> <span class="hljs-string">&quot;Windows 7-dde00fa9.vmem&quot;</span> windows.filescan | <span class="hljs-built_in">Select-String</span> <span class="hljs-string">&quot;My_Wifi&quot;</span><br></code></pre></td></tr></table></figure>
+
+<p><img src="/img/image-20250728171922516.png" srcset="/img/loading.gif" lazyload alt="搜索 WiFi 相关文件"></p>
+<p>运气不错，找到了一个 <code>My_Wifi.zip</code> 文件。我立刻使用 <code>dumpfiles</code> 将它从内存中提取出来。</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs powershell">python vol.py <span class="hljs-operator">-f</span> <span class="hljs-string">&quot;Windows 7-dde00fa9.vmem&quot;</span> windows.dumpfiles <span class="hljs-literal">--physaddr</span> <span class="hljs-number">0</span>x3fdc38c8<br><span class="hljs-built_in">Rename-Item</span> <span class="hljs-string">&quot;file.0x3fdc38c8.dmp&quot;</span> <span class="hljs-string">&quot;My_Wifi.zip&quot;</span><br></code></pre></td></tr></table></figure>
+
+<p>然而，解压时发现 ZIP 文件有密码，注释提示密码是 <code>Network Adapter GUID</code>。</p>
+<p>![ZIP 文件密码提示](&#x2F;img&#x2F;屏幕截图 2025-07-28 112609.png)</p>
+<p>于是，我回到 Volatility，继续在内存中搜索网络接口信息，以找到这个 GUID。</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs powershell">python vol.py <span class="hljs-operator">-f</span> <span class="hljs-string">&quot;Windows 7-dde00fa9.vmem&quot;</span> windows.filescan | <span class="hljs-built_in">Out-File</span> <span class="hljs-literal">-FilePath</span> filescan.txt <span class="hljs-literal">-Encoding</span> utf8<br><span class="hljs-built_in">Select-String</span> <span class="hljs-literal">-Path</span> filescan.txt <span class="hljs-string">&quot;Interfaces&quot;</span> &gt; interfaces_files.txt<br></code></pre></td></tr></table></figure>
+
+<p><img src="/img/image-20250728172547439.png" srcset="/img/loading.gif" lazyload alt="获取网络适配器 GUID"></p>
+<p>成功找到了 GUID：<code>&#123;529B7D2A-05D1-4F21-A001-8F4FF817FC3A&#125;</code>。用这个 GUID 作为密码，我成功解压了 ZIP 文件，得到了 <code>无线网络连接-My_Wifi.xml</code>。</p>
+<p>打开这个 XML 文件，WiFi 密码赫然在列。</p>
+<p><img src="/img/image-20250728172705356.png" srcset="/img/loading.gif" lazyload alt="获取 WiFi 密码"></p>
+<p>WiFi 密码是：<code>233@114514_qwe</code></p>
+<h3 id="3-解密流量，最终夺旗"><a href="#3-解密流量，最终夺旗" class="headerlink" title="3. 解密流量，最终夺旗"></a>3. 解密流量，最终夺旗</h3><p>拿到了密码，解密客户端流量就轻而易举了。我在 Wireshark 中配置好 WPA2 解密密钥（SSID: My_Wifi, 密码: 233@114514_qwe）。</p>
+<p>![配置 Wireshark 解密](&#x2F;img&#x2F;屏幕截图 2025-07-28 152248.png)</p>
+<p>解密后，过滤 HTTP 流量，我看到了四个来自哥斯拉 Webshell 的响应包。</p>
+<p><img src="/img/image-20250728173419607.png" srcset="/img/loading.gif" lazyload alt="发现 Webshell 响应包"></p>
+<p>追踪其中一个 HTTP 流，提取出加密的响应数据。</p>
+<p><img src="/img/image-20250728173513471.png" srcset="/img/loading.gif" lazyload alt="提取加密响应数据"></p>
+<p>最后，使用哥斯拉的解密脚本，对这段数据进行解密，就能得到最终的 Flag。</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-meta">&lt;?php</span><br><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">encode</span>(<span class="hljs-params"><span class="hljs-variable">$D</span>, <span class="hljs-variable">$K</span></span>) </span>&#123;<br>    <span class="hljs-keyword">for</span>(<span class="hljs-variable">$i</span> = <span class="hljs-number">0</span>; <span class="hljs-variable">$i</span> &lt; <span class="hljs-title function_ invoke__">strlen</span>(<span class="hljs-variable">$D</span>); <span class="hljs-variable">$i</span>++) &#123;<br>        <span class="hljs-variable">$c</span> = <span class="hljs-variable">$K</span>[<span class="hljs-variable">$i</span> + <span class="hljs-number">1</span> &amp; <span class="hljs-number">15</span>];<br>        <span class="hljs-variable">$D</span>[<span class="hljs-variable">$i</span>] = <span class="hljs-variable">$D</span>[<span class="hljs-variable">$i</span>] ^ <span class="hljs-variable">$c</span>;<br>    &#125;<br>    <span class="hljs-keyword">return</span> <span class="hljs-variable">$D</span>;<br>&#125;<br><br><span class="hljs-variable">$key</span> = <span class="hljs-string">&#x27;3c6e0b8a9c15224a&#x27;</span>;<br><span class="hljs-variable">$key1</span> = <span class="hljs-string">&quot;72a9c691ccdaab98fL1tMGI4YTljMn75e3jOBS5/V31Qd1NxKQMCe3h4KwFQfVAEVworCi0FfgB+BlWZhjRlQuTIIB5jMTU=b4c4e1f6ddd2a488&quot;</span>;<br><span class="hljs-variable">$str</span> = <span class="hljs-title function_ invoke__">substr</span>(<span class="hljs-variable">$key1</span>, <span class="hljs-number">16</span>, -<span class="hljs-number">16</span>);  <span class="hljs-comment">// 去除前后各16位字符</span><br><span class="hljs-variable">$str</span> = <span class="hljs-title function_ invoke__">gzdecode</span>(<span class="hljs-title function_ invoke__">encode</span>(<span class="hljs-title function_ invoke__">base64_decode</span>(<span class="hljs-variable">$str</span>), <span class="hljs-variable">$key</span>));<br><span class="hljs-keyword">echo</span> <span class="hljs-variable">$str</span>;<br><span class="hljs-meta">?&gt;</span><br></code></pre></td></tr></table></figure>
+
+<p>运行脚本，成功输出 Flag：<code>flag&#123;5db5b7b0bb74babb66e1522f3a6b1b12&#125;</code>。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>这个题目综合考察了流量分析和内存取证技术，从发现 Webshell 到解密 WiFi 流量，再到最后从 C2 响应中解出 Flag，环环相扣，是一道质量很高的 CTF 赛题。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/CTF%E7%AB%9E%E8%B5%9B/" class="category-chain-item">CTF竞赛</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/CTF%E7%AB%9E%E8%B5%9B/MISC/" class="category-chain-item">MISC</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/CTF/" class="print-no-link">#CTF</a>
+      
+        <a href="/tags/WriteUp/" class="print-no-link">#WriteUp</a>
+      
+        <a href="/tags/%E9%99%87%E5%89%91%E6%9D%AF/" class="print-no-link">#陇剑杯</a>
+      
+        <a href="/tags/%E5%86%85%E5%AD%98%E5%8F%96%E8%AF%81/" class="print-no-link">#内存取证</a>
+      
+        <a href="/tags/%E6%B5%81%E9%87%8F%E5%88%86%E6%9E%90/" class="print-no-link">#流量分析</a>
+      
+    </div>
+  
+</div>
+
+
+              
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/08/18/File-Upload-to-Achieve-Stored-XSS-Attack/" title="XunRuiCMS v4.7.1 - Stored XSS via SVG File Upload">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">XunRuiCMS v4.7.1 - Stored XSS via SVG File Upload</span>
+                        <span class="visible-mobile">Previous</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/08/16/%E5%9F%BA%E4%BA%8E%E6%89%A9%E6%95%A3%E6%A8%A1%E5%9E%8B%E7%9A%84%E6%B5%81%E9%87%8F%E6%A3%80%E6%B5%8B%E5%92%8C%E5%93%8D%E5%BA%94%E7%B3%BB%E7%BB%9F/" title="基于深度学习的流量检测和响应系统">
+                        <span class="hidden-mobile">基于深度学习的流量检测和响应系统</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>Table of Contents</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Search</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">Keyword</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">Blog works best with JavaScript enabled</div>
+  </noscript>
+</body>
+</html>
