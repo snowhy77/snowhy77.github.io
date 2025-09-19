@@ -1,0 +1,684 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="rgba(71, 46, 98, 0.8)">
+  <meta name="author" content="kyrie711-wq">
+  <meta name="keywords" content="博客,技术,笔记">
+  
+    <meta name="description" content="本篇将分享一道关于 WEB 流量分析的 CTF 题目解题思路，核心在于解密 TLS 流量并从请求中提取关键参数。 解题步骤1. 加载流量包与配置解密首先，在 Wireshark 中导入题目附件 passthru.pcap。流量记录显示为 TLSv1.2 协议，表明通信内容已被加密。  为了解密流量，需要配置 TLS 解密密钥。导航至 Edit &gt; Preferences &gt; Proto">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[INSHack2019]Passthru">
+<meta property="og:url" content="https://kyrie711-wq.github.io/2025/08/08/CTF%E7%AB%9E%E8%B5%9B/MISC/[INSHack2019]Passthru/index.html">
+<meta property="og:site_name" content="我的博客">
+<meta property="og:description" content="本篇将分享一道关于 WEB 流量分析的 CTF 题目解题思路，核心在于解密 TLS 流量并从请求中提取关键参数。 解题步骤1. 加载流量包与配置解密首先，在 Wireshark 中导入题目附件 passthru.pcap。流量记录显示为 TLSv1.2 协议，表明通信内容已被加密。  为了解密流量，需要配置 TLS 解密密钥。导航至 Edit &gt; Preferences &gt; Proto">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://kyrie711-wq.github.io/img/screenshot-20250724110037966.png">
+<meta property="og:image" content="https://kyrie711-wq.github.io/img/screenshot-2025-07-24-103245.png">
+<meta property="og:image" content="https://kyrie711-wq.github.io/img/screenshot-2025-07-24-103258.png">
+<meta property="og:image" content="https://kyrie711-wq.github.io/img/screenshot-2025-07-24-103354.png">
+<meta property="og:image" content="https://kyrie711-wq.github.io/img/screenshot-2025-07-24-103816.png">
+<meta property="article:published_time" content="2025-08-08T10:00:00.000Z">
+<meta property="article:modified_time" content="2025-09-19T07:03:11.498Z">
+<meta property="article:author" content="kyrie711-wq">
+<meta property="article:tag" content="CTF">
+<meta property="article:tag" content="WriteUp">
+<meta property="article:tag" content="流量分析">
+<meta property="article:tag" content="Wireshark">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://kyrie711-wq.github.io/img/screenshot-20250724110037966.png">
+  
+  
+  
+  <title>[INSHack2019]Passthru - 我的博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/custom.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"kyrie711-wq.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>我的博客</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>Home</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>Archives</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/%E5%AE%89%E5%85%A8%E9%A1%B9%E7%9B%AE/" target="_self">
+                <i class="iconfont icon-app"></i>
+                <span>安全项目</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98/" target="_self">
+                <i class="iconfont icon-bug-fill"></i>
+                <span>漏洞挖掘</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/CTF%E7%AB%9E%E8%B5%9B/" target="_self">
+                <i class="iconfont icon-flag-fill"></i>
+                <span>CTF竞赛</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/Web%E6%B8%97%E9%80%8F/" target="_self">
+                <i class="iconfont icon-windows-fill"></i>
+                <span>Web渗透</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>Tags</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>About</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/vdysjx.webp') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="[INSHack2019]Passthru"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-08-08 18:00" pubdate>
+          August 8, 2025 pm
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          383 words
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          4 mins
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">[INSHack2019]Passthru</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>本篇将分享一道关于 WEB 流量分析的 CTF 题目解题思路，核心在于解密 TLS 流量并从请求中提取关键参数。</p>
+<h3 id="解题步骤"><a href="#解题步骤" class="headerlink" title="解题步骤"></a>解题步骤</h3><h4 id="1-加载流量包与配置解密"><a href="#1-加载流量包与配置解密" class="headerlink" title="1. 加载流量包与配置解密"></a>1. 加载流量包与配置解密</h4><p>首先，在 Wireshark 中导入题目附件 <code>passthru.pcap</code>。流量记录显示为 TLSv1.2 协议，表明通信内容已被加密。</p>
+<p><img src="/img/screenshot-20250724110037966.png" srcset="/img/loading.gif" lazyload alt="加密的 TLS 流量"></p>
+<p>为了解密流量，需要配置 TLS 解密密钥。导航至 <strong>Edit &gt; Preferences &gt; Protocols &gt; TLS</strong>，并在 <strong>(Pre)-Master-Secret log filename</strong> 字段导入 <code>sslkey.log</code> 文件。</p>
+<p><img src="/img/screenshot-2025-07-24-103245.png" srcset="/img/loading.gif" lazyload alt="配置 TLS 解密密钥"></p>
+<p>配置完成后，Wireshark 会自动解密 TLS 流量，还原为 HTTP 协议，便于后续分析。</p>
+<h4 id="2-过滤并提取参数"><a href="#2-过滤并提取参数" class="headerlink" title="2. 过滤并提取参数"></a>2. 过滤并提取参数</h4><p>在显示过滤器中输入 <code>http.request.method == &quot;GET&quot;</code>，筛选所有 HTTP GET 请求。观察发现，请求的 URL 中包含一个名为 <code>kcahsni</code> 的参数。<code>kcahsni</code> 是 <code>inshack</code> 的逆序，这提示我们需要提取所有 <code>kcahsni</code> 参数的值并进行逆序处理。</p>
+<p><img src="/img/screenshot-2025-07-24-103258.png" srcset="/img/loading.gif" lazyload alt="发现 kcahsni 参数"></p>
+<p>为了高效提取所有请求中的 <code>kcahsni</code> 参数，可使用 <code>tshark</code> 命令行工具。执行以下命令，将所有参数值批量提取到 <code>query.txt</code> 文件中：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">tshark -r passthru.pcap -o tls.keylog_file:sslkey.log -T fields -e http.request.uri.query.parameter -Y <span class="hljs-string">&quot;http.request.uri.query.parameter contains \&quot;kcahsni\&quot;&quot;</span> &gt; query.txt<br></code></pre></td></tr></table></figure>
+
+<p><img src="/img/screenshot-2025-07-24-103354.png" srcset="/img/loading.gif" lazyload alt="提取的参数值"></p>
+<h4 id="3-拼接并反转-Flag"><a href="#3-拼接并反转-Flag" class="headerlink" title="3. 拼接并反转 Flag"></a>3. 拼接并反转 Flag</h4><p><code>query.txt</code> 中的数据经过 URL 编码，需要解码、拼接和逆序。使用以下 Python 脚本处理：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> urllib.parse <span class="hljs-keyword">import</span> unquote<br><span class="hljs-keyword">import</span> re<br><br><span class="hljs-keyword">with</span> <span class="hljs-built_in">open</span>(<span class="hljs-string">&#x27;query.txt&#x27;</span>, <span class="hljs-string">&#x27;r&#x27;</span>) <span class="hljs-keyword">as</span> f:<br>    data = unquote(f.read())<br>    rlist = re.findall(<span class="hljs-string">r&#x27;kcahsni=(.*?),&#x27;</span>, data)<br>    result = <span class="hljs-built_in">bytes</span>.fromhex(<span class="hljs-string">&#x27;&#x27;</span>.join(rlist))[::-<span class="hljs-number">1</span>]<br>    <span class="hljs-built_in">print</span>(result.decode())<br></code></pre></td></tr></table></figure>
+
+<p>运行脚本，即可得到最终的 Flag。</p>
+<p><img src="/img/screenshot-2025-07-24-103816.png" srcset="/img/loading.gif" lazyload alt="运行脚本获取 Flag"></p>
+<p><strong>Flag</strong>: <code>INSA&#123;b274dddb2c7707ebe430dadcf1245c246713502d6e9579f00acd10a83f3da95e&#125;</code></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/CTF%E7%AB%9E%E8%B5%9B/" class="category-chain-item">CTF竞赛</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/CTF%E7%AB%9E%E8%B5%9B/MISC/" class="category-chain-item">MISC</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/CTF/" class="print-no-link">#CTF</a>
+      
+        <a href="/tags/WriteUp/" class="print-no-link">#WriteUp</a>
+      
+        <a href="/tags/%E6%B5%81%E9%87%8F%E5%88%86%E6%9E%90/" class="print-no-link">#流量分析</a>
+      
+        <a href="/tags/Wireshark/" class="print-no-link">#Wireshark</a>
+      
+    </div>
+  
+</div>
+
+
+              
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/08/08/CTF%E7%AB%9E%E8%B5%9B/MISC/%5B2019RoarCTF%5D%E9%BB%84%E9%87%91%E5%85%AD%E5%B9%B4/" title="[2019RoarCTF]黄金六年">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">[2019RoarCTF]黄金六年</span>
+                        <span class="visible-mobile">Previous</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/08/08/CTF%E7%AB%9E%E8%B5%9B/MISC/%5BNISACTF%202022%5Dhuaji/" title="[NISACTF 2022]huaji">
+                        <span class="hidden-mobile">[NISACTF 2022]huaji</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>Table of Contents</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Search</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">Keyword</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">Blog works best with JavaScript enabled</div>
+  </noscript>
+</body>
+</html>

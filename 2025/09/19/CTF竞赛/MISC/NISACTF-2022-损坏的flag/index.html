@@ -1,0 +1,699 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="rgba(71, 46, 98, 0.8)">
+  <meta name="author" content="kyrie711-wq">
+  <meta name="keywords" content="博客,技术,笔记">
+  
+    <meta name="description" content="本篇将分享一道关于 USB 流量分析的 CTF 题目解题思路，题目来自 [NISACTF 2022]损坏的flag。 1. 识别文件类型并加载 文件类型识别：使用 010 Editor 打开附件 atta.NISACTF_2022flag，观察到其文件头为 D4 C3 B2 A1，这是 libpcap 格式的典型特征（Magic Number）。   加载流量包：将文件名后缀修改为 .pcap，然">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[NISACTF 2022]损坏的flag">
+<meta property="og:url" content="https://kyrie711-wq.github.io/2025/09/19/CTF%E7%AB%9E%E8%B5%9B/MISC/NISACTF-2022-%E6%8D%9F%E5%9D%8F%E7%9A%84flag/index.html">
+<meta property="og:site_name" content="我的博客">
+<meta property="og:description" content="本篇将分享一道关于 USB 流量分析的 CTF 题目解题思路，题目来自 [NISACTF 2022]损坏的flag。 1. 识别文件类型并加载 文件类型识别：使用 010 Editor 打开附件 atta.NISACTF_2022flag，观察到其文件头为 D4 C3 B2 A1，这是 libpcap 格式的典型特征（Magic Number）。   加载流量包：将文件名后缀修改为 .pcap，然">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://kyrie711-wq.github.io/img/screenshot-2025-07-25-101554.png">
+<meta property="og:image" content="https://kyrie711-wq.github.io/img/image-20250725112420431.png">
+<meta property="og:image" content="https://kyrie711-wq.github.io/img/screenshot-2025-07-25-112632.png">
+<meta property="og:image" content="https://kyrie711-wq.github.io/img/image-20250725112858452.png">
+<meta property="og:image" content="https://kyrie711-wq.github.io/img/image-20250725121901863.png">
+<meta property="og:image" content="https://kyrie711-wq.github.io/img/image-20250725122029750.png">
+<meta property="article:published_time" content="2025-09-19T07:00:00.000Z">
+<meta property="article:modified_time" content="2025-09-19T06:37:24.874Z">
+<meta property="article:author" content="kyrie711-wq">
+<meta property="article:tag" content="CTF">
+<meta property="article:tag" content="WriteUp">
+<meta property="article:tag" content="USB">
+<meta property="article:tag" content="流量分析">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://kyrie711-wq.github.io/img/screenshot-2025-07-25-101554.png">
+  
+  
+  
+  <title>[NISACTF 2022]损坏的flag - 我的博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/custom.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"kyrie711-wq.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>我的博客</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>Home</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>Archives</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/%E5%AE%89%E5%85%A8%E9%A1%B9%E7%9B%AE/" target="_self">
+                <i class="iconfont icon-app"></i>
+                <span>安全项目</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98/" target="_self">
+                <i class="iconfont icon-bug-fill"></i>
+                <span>漏洞挖掘</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/CTF%E7%AB%9E%E8%B5%9B/" target="_self">
+                <i class="iconfont icon-flag-fill"></i>
+                <span>CTF竞赛</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/Web%E6%B8%97%E9%80%8F/" target="_self">
+                <i class="iconfont icon-windows-fill"></i>
+                <span>Web渗透</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>Tags</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>About</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/vdysjx.webp') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="[NISACTF 2022]损坏的flag"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-09-19 15:00" pubdate>
+          September 19, 2025 pm
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          695 words
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          6 mins
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">[NISACTF 2022]损坏的flag</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>本篇将分享一道关于 USB 流量分析的 CTF 题目解题思路，题目来自 <a target="_blank" rel="noopener" href="https://buuoj.cn/challenges#%5BNISACTF%202022%5D%E6%8D%9F%E5%9D%8F%E7%9A%84flag">[NISACTF 2022]损坏的flag</a>。</p>
+<h3 id="1-识别文件类型并加载"><a href="#1-识别文件类型并加载" class="headerlink" title="1. 识别文件类型并加载"></a>1. 识别文件类型并加载</h3><ol>
+<li><p><strong>文件类型识别</strong>：<br>使用 010 Editor 打开附件 <code>atta.NISACTF_2022flag</code>，观察到其文件头为 <code>D4 C3 B2 A1</code>，这是 libpcap 格式的典型特征（Magic Number）。</p>
+<p><img src="/img/screenshot-2025-07-25-101554.png" srcset="/img/loading.gif" lazyload alt="文件头识别"></p>
+</li>
+<li><p><strong>加载流量包</strong>：<br>将文件名后缀修改为 <code>.pcap</code>，然后使用 Wireshark 打开。观察发现流量包内容为 USB 协议数据。</p>
+<p><img src="/img/image-20250725112420431.png" srcset="/img/loading.gif" lazyload alt="USB 流量"></p>
+</li>
+</ol>
+<h3 id="2-提取键盘流量数据"><a href="#2-提取键盘流量数据" class="headerlink" title="2. 提取键盘流量数据"></a>2. 提取键盘流量数据</h3><ol>
+<li><p><strong>流量特征分析</strong>：<br>在 Wireshark 中，可以看到 USB 数据包的 <code>Leftover Capture Data</code> 字段长度为 8 字节，且通常只有第 3 个字节非零。这是 USB HID 键盘数据的典型特征。</p>
+<p><img src="/img/screenshot-2025-07-25-112632.png" srcset="/img/loading.gif" lazyload alt="键盘流量特征"></p>
+</li>
+<li><p><strong>使用 tshark 批量提取</strong>：<br>为了提取所有键盘击键数据，可使用 <code>tshark</code> 命令行工具。执行以下命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">tshark -r atta.NISACTF_2022flag.pcap -T fields -e usb.capdata &gt; usbdata.txt<br></code></pre></td></tr></table></figure>
+
+<p>该命令会从流量包中提取所有 <code>usb.capdata</code> 字段，并将其保存到 <code>usbdata.txt</code> 文件中。</p>
+<p><img src="/img/image-20250725112858452.png" srcset="/img/loading.gif" lazyload alt="提取的数据"></p>
+</li>
+</ol>
+<h3 id="3-映射数据并破译-Flag"><a href="#3-映射数据并破译-Flag" class="headerlink" title="3. 映射数据并破译 Flag"></a>3. 映射数据并破译 Flag</h3><ol>
+<li><p><strong>编写转换脚本</strong>：<br><code>usbdata.txt</code> 中的数据是十六进制的键盘扫描码，需要根据 USB HID Usage Tables 将其转换为可读字符。以下 Python 脚本可实现此转换：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># -*- coding:utf-8 -*-</span><br>mappings = &#123;<span class="hljs-number">0x04</span>:<span class="hljs-string">&quot;A&quot;</span>, <span class="hljs-number">0x05</span>:<span class="hljs-string">&quot;B&quot;</span>, <span class="hljs-number">0x06</span>:<span class="hljs-string">&quot;C&quot;</span>, <span class="hljs-number">0x07</span>:<span class="hljs-string">&quot;D&quot;</span>, <span class="hljs-number">0x08</span>:<span class="hljs-string">&quot;E&quot;</span>, <span class="hljs-number">0x09</span>:<span class="hljs-string">&quot;F&quot;</span>, <span class="hljs-number">0x0a</span>:<span class="hljs-string">&quot;G&quot;</span>, <span class="hljs-number">0x0b</span>:<span class="hljs-string">&quot;H&quot;</span>, <span class="hljs-number">0x0c</span>:<span class="hljs-string">&quot;I&quot;</span>, <span class="hljs-number">0x0d</span>:<span class="hljs-string">&quot;J&quot;</span>, <span class="hljs-number">0x0e</span>:<span class="hljs-string">&quot;K&quot;</span>, <span class="hljs-number">0x0f</span>:<span class="hljs-string">&quot;L&quot;</span>, <span class="hljs-number">0x10</span>:<span class="hljs-string">&quot;M&quot;</span>, <span class="hljs-number">0x11</span>:<span class="hljs-string">&quot;N&quot;</span>, <span class="hljs-number">0x12</span>:<span class="hljs-string">&quot;O&quot;</span>, <span class="hljs-number">0x13</span>:<span class="hljs-string">&quot;P&quot;</span>, <span class="hljs-number">0x14</span>:<span class="hljs-string">&quot;Q&quot;</span>, <span class="hljs-number">0x15</span>:<span class="hljs-string">&quot;R&quot;</span>, <span class="hljs-number">0x16</span>:<span class="hljs-string">&quot;S&quot;</span>, <span class="hljs-number">0x17</span>:<span class="hljs-string">&quot;T&quot;</span>, <span class="hljs-number">0x18</span>:<span class="hljs-string">&quot;U&quot;</span>, <span class="hljs-number">0x19</span>:<span class="hljs-string">&quot;V&quot;</span>, <span class="hljs-number">0x1a</span>:<span class="hljs-string">&quot;W&quot;</span>, <span class="hljs-number">0x1b</span>:<span class="hljs-string">&quot;X&quot;</span>, <span class="hljs-number">0x1c</span>:<span class="hljs-string">&quot;Y&quot;</span>, <span class="hljs-number">0x1d</span>:<span class="hljs-string">&quot;Z&quot;</span>,<span class="hljs-number">0x1e</span>:<span class="hljs-string">&quot;1&quot;</span>, <span class="hljs-number">0x1f</span>:<span class="hljs-string">&quot;2&quot;</span>, <span class="hljs-number">0x20</span>:<span class="hljs-string">&quot;3&quot;</span>, <span class="hljs-number">0x21</span>:<span class="hljs-string">&quot;4&quot;</span>, <span class="hljs-number">0x22</span>:<span class="hljs-string">&quot;5&quot;</span>, <span class="hljs-number">0x23</span>:<span class="hljs-string">&quot;6&quot;</span>,<span class="hljs-number">0x24</span>:<span class="hljs-string">&quot;7&quot;</span>,<span class="hljs-number">0x25</span>:<span class="hljs-string">&quot;8&quot;</span>,<span class="hljs-number">0x26</span>:<span class="hljs-string">&quot;9&quot;</span>,<span class="hljs-number">0x27</span>:<span class="hljs-string">&quot;0&quot;</span>,<span class="hljs-number">0x28</span>:<span class="hljs-string">&quot;&lt;RET&gt;&quot;</span>,<span class="hljs-number">0x29</span>:<span class="hljs-string">&quot;&lt;ESC&gt;&quot;</span>,<span class="hljs-number">0x2a</span>:<span class="hljs-string">&quot;&lt;DEL&gt;&quot;</span>, <span class="hljs-number">0x2b</span>:<span class="hljs-string">&quot;	&quot;</span>,<span class="hljs-number">0x2c</span>:<span class="hljs-string">&quot;&lt;SPACE&gt;&quot;</span>,<span class="hljs-number">0x2d</span>:<span class="hljs-string">&quot;-&quot;</span>,<span class="hljs-number">0x2e</span>:<span class="hljs-string">&quot;=&quot;</span>,<span class="hljs-number">0x2f</span>:<span class="hljs-string">&quot;[&quot;</span>,<span class="hljs-number">0x30</span>:<span class="hljs-string">&quot;]&quot;</span>,<span class="hljs-number">0x31</span>:<span class="hljs-string">&quot;\&quot;,0x32:&quot;</span>&lt;NON&gt;<span class="hljs-string">&quot;,0x33:&quot;</span>;<span class="hljs-string">&quot;,0x34:&quot;</span><span class="hljs-string">&#x27;&quot;,0x35:&quot;`&quot;,0x36:&quot;,&quot;,0x37:&quot;.&quot;,0x38:&quot;/&quot;,0x39:&quot;&lt;CAP&gt;&quot;,0x3a:&quot;&lt;F1&gt;&quot;,0x3b:&quot;&lt;F2&gt;&quot;, 0x3c:&quot;&lt;F3&gt;&quot;,0x3d:&quot;&lt;F4&gt;&quot;,0x3e:&quot;&lt;F5&gt;&quot;,0x3f:&quot;&lt;F6&gt;&quot;,0x40:&quot;&lt;F7&gt;&quot;,0x41:&quot;&lt;F8&gt;&quot;,0x42:&quot;&lt;F9&gt;&quot;,0x43:&quot;&lt;F10&gt;&quot;,0x44:&quot;&lt;F11&gt;&quot;,0x45:&quot;&lt;F12&gt;&quot;&#125;</span><br><span class="hljs-string">result = &#x27;</span><span class="hljs-string">&#x27;</span><br><span class="hljs-string">with open(&#x27;</span>usbdata.txt<span class="hljs-string">&#x27;, &#x27;</span><span class="hljs-string">r&#x27;) as f:</span><br><span class="hljs-string">    for line in f.readlines():</span><br><span class="hljs-string">        line = line.strip()</span><br><span class="hljs-string">        if len(line) == 16:</span><br><span class="hljs-string">            s = int(line[4:6], 16)</span><br><span class="hljs-string">        elif len(line) == 24:</span><br><span class="hljs-string">            s = int(line[6:8], 16)</span><br><span class="hljs-string">        else:</span><br><span class="hljs-string">            continue</span><br><span class="hljs-string">        if s != 0 and s in mappings:</span><br><span class="hljs-string">            result += mappings[s]</span><br><span class="hljs-string">print(result)</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p><strong>分析转换结果</strong>：<br>运行脚本，得到转换后的字符串。</p>
+<p><img src="/img/image-20250725121901863.png" srcset="/img/loading.gif" lazyload alt="转换结果"></p>
+</li>
+<li><p><strong>获取 Flag</strong>：<br>观察输出的字符序列，它们在标准键盘布局上构成一个闭合形状，包围的字母即为 Flag。</p>
+<p><img src="/img/image-20250725122029750.png" srcset="/img/loading.gif" lazyload alt="键盘布局"></p>
+<p><strong>Flag</strong>: <code>welcome_to_fjnu</code></p>
+</li>
+</ol>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/CTF%E7%AB%9E%E8%B5%9B/" class="category-chain-item">CTF竞赛</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/CTF%E7%AB%9E%E8%B5%9B/MISC/" class="category-chain-item">MISC</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/CTF/" class="print-no-link">#CTF</a>
+      
+        <a href="/tags/WriteUp/" class="print-no-link">#WriteUp</a>
+      
+        <a href="/tags/USB/" class="print-no-link">#USB</a>
+      
+        <a href="/tags/%E6%B5%81%E9%87%8F%E5%88%86%E6%9E%90/" class="print-no-link">#流量分析</a>
+      
+    </div>
+  
+</div>
+
+
+              
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2025/09/19/CTF%E7%AB%9E%E8%B5%9B/MISC/UTCTF2020docx/" title="UTCTF2020-docx">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">UTCTF2020-docx</span>
+                        <span class="visible-mobile">Previous</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/08/23/Redis4-unacc%E6%9C%AA%E6%8E%88%E6%9D%83%E8%AE%BF%E9%97%AE%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0/" title="Redis4-unacc未授权访问漏洞复现">
+                        <span class="hidden-mobile">Redis4-unacc未授权访问漏洞复现</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>Table of Contents</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Search</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">Keyword</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">Blog works best with JavaScript enabled</div>
+  </noscript>
+</body>
+</html>
