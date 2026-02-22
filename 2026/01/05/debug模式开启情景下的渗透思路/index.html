@@ -19,16 +19,16 @@
   <meta name="author" content="kyrie711-wq">
   <meta name="keywords" content="博客,技术,笔记">
   
-    <meta name="description" content="debug模式开启情景下的渗透思路Django Debug模式启动（pd项目场景）当 debug&#x3D;true 时，显示非标准的 404 Not Found 页面  添加任意路径进行测试，能发现所有api接口  随后进行遍历发现未授权  而且在test.html页面下发现生产环境信息，属于敏感信息泄露   有环境变量名，文件结构还有数据库名字，用户，被脱敏的密码 除此之外，很多框架的debu">
+    <meta name="description" content="实战攻防1-debug模式开启情景下的渗透思路Django Debug模式启动（pd项目场景）当 debug&#x3D;true 时，显示非标准的 404 Not Found 页面  添加任意路径进行测试，能发现所有api接口  随后进行遍历发现未授权  而且在test.html页面下发现生产环境信息，属于敏感信息泄露   有环境变量名，文件结构还有数据库名字，用户，被脱敏的密码 除此之外，很多框">
 <meta property="og:type" content="article">
-<meta property="og:title" content="debug模式开启情景下的渗透思路">
+<meta property="og:title" content="实战攻防1-debug模式开启情景下的渗透思路">
 <meta property="og:url" content="https://kyrie711-wq.github.io/2026/01/05/debug%E6%A8%A1%E5%BC%8F%E5%BC%80%E5%90%AF%E6%83%85%E6%99%AF%E4%B8%8B%E7%9A%84%E6%B8%97%E9%80%8F%E6%80%9D%E8%B7%AF/index.html">
 <meta property="og:site_name" content="snowhy的博客">
-<meta property="og:description" content="debug模式开启情景下的渗透思路Django Debug模式启动（pd项目场景）当 debug&#x3D;true 时，显示非标准的 404 Not Found 页面  添加任意路径进行测试，能发现所有api接口  随后进行遍历发现未授权  而且在test.html页面下发现生产环境信息，属于敏感信息泄露   有环境变量名，文件结构还有数据库名字，用户，被脱敏的密码 除此之外，很多框架的debu">
+<meta property="og:description" content="实战攻防1-debug模式开启情景下的渗透思路Django Debug模式启动（pd项目场景）当 debug&#x3D;true 时，显示非标准的 404 Not Found 页面  添加任意路径进行测试，能发现所有api接口  随后进行遍历发现未授权  而且在test.html页面下发现生产环境信息，属于敏感信息泄露   有环境变量名，文件结构还有数据库名字，用户，被脱敏的密码 除此之外，很多框">
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="https://kyrie711-wq.github.io/img/image-20260105192906325.png">
 <meta property="article:published_time" content="2026-01-04T16:00:00.000Z">
-<meta property="article:modified_time" content="2026-01-11T08:00:55.561Z">
+<meta property="article:modified_time" content="2026-02-22T05:58:15.153Z">
 <meta property="article:author" content="kyrie711-wq">
 <meta property="article:tag" content="Debug模式">
 <meta property="article:tag" content="信息泄露">
@@ -42,7 +42,7 @@
   
   
   
-  <title>debug模式开启情景下的渗透思路 - snowhy的博客</title>
+  <title>实战攻防1-debug模式开启情景下的渗透思路 - snowhy的博客</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -248,7 +248,7 @@
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle" data-typed-text="debug模式开启情景下的渗透思路"></span>
+            <span id="subtitle" data-typed-text="实战攻防1-debug模式开启情景下的渗透思路"></span>
           
         </div>
 
@@ -319,12 +319,12 @@
       <div class="container nopadding-x-md" id="board-ctn">
         <div id="board">
           <article class="post-content mx-auto">
-            <h1 id="seo-header">debug模式开启情景下的渗透思路</h1>
+            <h1 id="seo-header">实战攻防1-debug模式开启情景下的渗透思路</h1>
             
             
               <div class="markdown-body">
                 
-                <h1 id="debug模式开启情景下的渗透思路"><a href="#debug模式开启情景下的渗透思路" class="headerlink" title="debug模式开启情景下的渗透思路"></a>debug模式开启情景下的渗透思路</h1><h2 id="Django-Debug模式启动（pd项目场景）"><a href="#Django-Debug模式启动（pd项目场景）" class="headerlink" title="Django Debug模式启动（pd项目场景）"></a>Django Debug模式启动（pd项目场景）</h2><p><strong>当 debug&#x3D;true 时，显示非标准的 404 Not Found 页面</strong></p>
+                <h1 id="实战攻防1-debug模式开启情景下的渗透思路"><a href="#实战攻防1-debug模式开启情景下的渗透思路" class="headerlink" title="实战攻防1-debug模式开启情景下的渗透思路"></a>实战攻防1-debug模式开启情景下的渗透思路</h1><h2 id="Django-Debug模式启动（pd项目场景）"><a href="#Django-Debug模式启动（pd项目场景）" class="headerlink" title="Django Debug模式启动（pd项目场景）"></a>Django Debug模式启动（pd项目场景）</h2><p><strong>当 debug&#x3D;true 时，显示非标准的 404 Not Found 页面</strong></p>
 <p><img src="/img/image-20260105192906325.png" srcset="/img/loading.gif" lazyload alt="Django Debug模式404页面"></p>
 <p>添加任意路径进行测试，能发现所有api接口</p>
 <p><img src="/img/image-20260105193449464.png" srcset="/img/loading.gif" lazyload alt="发现API接口"></p>
