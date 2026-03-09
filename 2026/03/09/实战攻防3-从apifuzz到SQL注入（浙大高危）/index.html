@@ -1,0 +1,711 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="rgba(71, 46, 98, 0.8)">
+  <meta name="author" content="kyrie711-wq">
+  <meta name="keywords" content="博客,技术,笔记">
+  
+    <meta name="description" content="实战攻防3-从apifuzz到SQL注入（浙大高危）在平时的渗透项目中经常会遇到一些 API 文档泄露，比如常见的 swagger 文档、knife4j 文档，在拿到这些文档之后我们可以对文档中的 API 接口进行模糊测试，测试未授权漏洞，要是参数报错，有机会打到 SQL 注入。 knife4j文档泄露Knife4j 是一款专为 Java Spring Boot&#x2F;Cloud 生态打造的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="实战攻防3-从apifuzz到SQL注入（浙大高危）">
+<meta property="og:url" content="https://kyrie711-wq.github.io/2026/03/09/%E5%AE%9E%E6%88%98%E6%94%BB%E9%98%B23-%E4%BB%8Eapifuzz%E5%88%B0SQL%E6%B3%A8%E5%85%A5%EF%BC%88%E6%B5%99%E5%A4%A7%E9%AB%98%E5%8D%B1%EF%BC%89/index.html">
+<meta property="og:site_name" content="snowhy的博客">
+<meta property="og:description" content="实战攻防3-从apifuzz到SQL注入（浙大高危）在平时的渗透项目中经常会遇到一些 API 文档泄露，比如常见的 swagger 文档、knife4j 文档，在拿到这些文档之后我们可以对文档中的 API 接口进行模糊测试，测试未授权漏洞，要是参数报错，有机会打到 SQL 注入。 knife4j文档泄露Knife4j 是一款专为 Java Spring Boot&#x2F;Cloud 生态打造的">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://kyrie711-wq.github.io/img/image-20260309185427168.png">
+<meta property="article:published_time" content="2026-03-08T16:00:00.000Z">
+<meta property="article:modified_time" content="2026-03-09T12:20:57.955Z">
+<meta property="article:author" content="kyrie711-wq">
+<meta property="article:tag" content="未授权访问">
+<meta property="article:tag" content="实战攻防">
+<meta property="article:tag" content="SQL注入">
+<meta property="article:tag" content="API安全">
+<meta property="article:tag" content="Swagger">
+<meta property="article:tag" content="Knife4j">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://kyrie711-wq.github.io/img/image-20260309185427168.png">
+  
+  
+  
+  <title>实战攻防3-从apifuzz到SQL注入（浙大高危） - snowhy的博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/custom.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"kyrie711-wq.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>snowhy的博客</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>Home</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>Archives</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/%E5%AE%89%E5%85%A8%E9%A1%B9%E7%9B%AE/" target="_self">
+                <i class="iconfont icon-app"></i>
+                <span>安全项目</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98/" target="_self">
+                <i class="iconfont icon-bug-fill"></i>
+                <span>漏洞挖掘</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/CTF%E7%AB%9E%E8%B5%9B/" target="_self">
+                <i class="iconfont icon-flag-fill"></i>
+                <span>CTF竞赛</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/Web%E6%B8%97%E9%80%8F/" target="_self">
+                <i class="iconfont icon-windows-fill"></i>
+                <span>Web渗透</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>Tags</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>About</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/vdysjx.webp') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="实战攻防3-从apifuzz到SQL注入（浙大高危）"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-03-09 00:00" pubdate>
+          March 9, 2026 am
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.1k words
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          10 mins
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">实战攻防3-从apifuzz到SQL注入（浙大高危）</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="实战攻防3-从apifuzz到SQL注入（浙大高危）"><a href="#实战攻防3-从apifuzz到SQL注入（浙大高危）" class="headerlink" title="实战攻防3-从apifuzz到SQL注入（浙大高危）"></a>实战攻防3-从apifuzz到SQL注入（浙大高危）</h1><p>在平时的渗透项目中经常会遇到一些 API 文档泄露，比如常见的 swagger 文档、knife4j 文档，在拿到这些文档之后我们可以对文档中的 API 接口进行模糊测试，测试未授权漏洞，要是参数报错，有机会打到 SQL 注入。</p>
+<h2 id="knife4j文档泄露"><a href="#knife4j文档泄露" class="headerlink" title="knife4j文档泄露"></a>knife4j文档泄露</h2><p>Knife4j 是一款专为 Java Spring Boot&#x2F;Cloud 生态打造的 Swagger 增强解决方案，它在原生 Swagger 基础上提供了更美观的 UI 界面、强大的接口调试功能（如全局参数设置、离线文档导出为 Word&#x2F;PDF&#x2F;Markdown）、完善的认证支持以及高效的微服务文档聚合管理能力，帮助开发者通过简单的配置即可快速生成专业且易用的 API 文档。</p>
+<h3 id="案例1-浙大某云平台实验室"><a href="#案例1-浙大某云平台实验室" class="headerlink" title="案例1-浙大某云平台实验室"></a>案例1-浙大某云平台实验室</h3><p><img src="/img/image-20260309185427168.png" srcset="/img/loading.gif" lazyload alt="Knife4j文档泄露"></p>
+<p>在获得这个文档的访问权限后可以尝试去调试每个接口，可以选定参数进行 fuzz，如下图：</p>
+<p><img src="/img/image-20260309185821113.png" srcset="/img/loading.gif" lazyload alt="接口调试与fuzz"></p>
+<p>发现这个接口未做鉴权，后续可以通过传参拿到系统其他数据，后面花了一番时间寻找，很可惜没有用户信息查询相关接口，但是发现一个文件上传接口：</p>
+<p><img src="/img/image-20260309190056873.png" srcset="/img/loading.gif" lazyload alt="文件上传接口"></p>
+<p>尝试上传个 txt，返回了相对路径：</p>
+<p><img src="/img/image-20260309190750733.png" srcset="/img/loading.gif" lazyload alt="上传返回相对路径"></p>
+<p>后面在另一个接口读取到上传的文件，发现只能是下载的形式：</p>
+<p><img src="/img/image-20260309190857453.png" srcset="/img/loading.gif" lazyload alt="只能下载文件"></p>
+<p>没招了，getshell 失败，打一手未授权跑路。</p>
+<h2 id="docs文本泄露手动fuzz"><a href="#docs文本泄露手动fuzz" class="headerlink" title="docs文本泄露手动fuzz"></a>docs文本泄露手动fuzz</h2><h3 id="案例2-某校友平台"><a href="#案例2-某校友平台" class="headerlink" title="案例2-某校友平台"></a>案例2-某校友平台</h3><p>有一些接口文档可能不是 swagger 或者 knife4j 文档便于自动调试的，这时候就需要自己构造数据包 fuzz 一下：</p>
+<p><img src="/img/image-20260309192228659.png" srcset="/img/loading.gif" lazyload alt="docs 文本接口说明"></p>
+<p>手动 fuzz 有很多种方法，我自己常用 BP 自己构造发包、Postman，或者直接 curl 命令，当然一些 BP 插件如 HAE、apikit 也可以试试。</p>
+<p>这里以 curl 命令举例，一开始直接传参账号密码：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs bash">curl -k -X POST <span class="hljs-string">&quot;https://ip/prod-api/register&quot;</span> \<br>  -H <span class="hljs-string">&quot;Content-Type: application/json&quot;</span> \<br>  -d <span class="hljs-string">&#x27;&#123;</span><br><span class="hljs-string">    &quot;username&quot;: &quot;testuser&quot;,</span><br><span class="hljs-string">    &quot;password&quot;: &quot;Test@123456&quot;</span><br><span class="hljs-string">  &#125;&#x27;</span> \<br>  -v<br></code></pre></td></tr></table></figure>
+
+<p>发现回显，说明这个接口虽然前端不能用，但是依然存在并且能响应：</p>
+<p><img src="/img/image-20260309193435883.png" srcset="/img/loading.gif" lazyload alt="接口有回显"></p>
+<p>注意这里提示地区，我尝试发现不对 area，后续回去文档中才找到正确的参数 <code>topDeptId</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs bash">curl -k -X POST <span class="hljs-string">&quot;https://ip/prod-api/register&quot;</span> \<br>  -H <span class="hljs-string">&quot;Content-Type: application/json&quot;</span> \<br>  -d <span class="hljs-string">&#x27;&#123;</span><br><span class="hljs-string">    &quot;username&quot;: &quot;testuser&quot;,</span><br><span class="hljs-string">    &quot;password&quot;: &quot;Test@123456&quot;,</span><br><span class="hljs-string">    &quot;topDeptId&quot;:100 &#125;&#x27;</span> \<br>  -v<br></code></pre></td></tr></table></figure>
+
+<p>接下来报错 <code>Decryption error</code>：</p>
+<p><img src="/img/image-20260309194514045.png" srcset="/img/loading.gif" lazyload alt="Decryption error 报错"></p>
+<p>这其实和 RuoYi 传参有关，我们的 <code>password</code> 必须是经过前端 JS 加密的数据，那我们可以在登录框取一个加密数据：</p>
+<p><img src="/img/image-20260309194717747.png" srcset="/img/loading.gif" lazyload alt="抓取前端加密密码"></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs bash">curl -k -X POST <span class="hljs-string">&quot;https://ip/prod-api/register&quot;</span> \<br>  -H <span class="hljs-string">&quot;Content-Type: application/json&quot;</span> \<br>  -d <span class="hljs-string">&#x27;&#123;</span><br><span class="hljs-string">    &quot;username&quot;: &quot;testuser&quot;,</span><br><span class="hljs-string">    &quot;password&quot;: &quot;ktfpBbZDIMPu6JN2STikCrt2Wq8VlKiPE/FPAgAXmJDkv2J6LWLf+p8BwlJMkzS5+ks5igvahX7m4mcS1zL+SRutfHub2Deq4lem52TxWOF7gJ7UfIiBqkIOGEFeizjCHyQR4L4/YjdsFuAGfBncHONK5cvgjHJO1z0GXAkhAhy11FwOo80WaadSxbWcStPBLWqYJDHZw1qJ2oqxbWnct8gugg7JVppmc+Y0tYIXqlbdbak7I/lCseZaCyfZfEYGIrLjl5grOcLsLFBGJwb/p3lufEVegQLA3THqceObG4du6hdYhrrAOSBEmMr04jtZphy42eOiI6L2m6be0MsLZQ==&quot;,</span><br><span class="hljs-string">    &quot;topDeptId&quot;:100 &#125;&#x27;</span> \<br>  -v<br></code></pre></td></tr></table></figure>
+
+<p>这里成功了：</p>
+<p><img src="/img/image-20260309195040014.png" srcset="/img/loading.gif" lazyload alt="注册接口成功响应"></p>
+<p>显示手机号为空那就继续 fuzz……</p>
+<p>最后成功的请求体如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs bash">curl -k -X POST <span class="hljs-string">&quot;https://ip/prod-api/register&quot;</span> \<br>  -H <span class="hljs-string">&quot;Content-Type: application/json&quot;</span> \<br>  -d <span class="hljs-string">&quot;&#123;</span><br><span class="hljs-string">    \&quot;username\&quot;: \&quot;hacker_test_02\&quot;,</span><br><span class="hljs-string">    \&quot;password\&quot;: \&quot;QFssU6bezzf0Ixqzma8gIdeB09q5BWLbv4gqUW0sMc0HsR5VhYnTtpKGuHiilgW0KpfOq2e/m9BRTuXeVjrdzUipf5+pGz5nMsYmm6SQJP1d8Kt52RC6Nl3Lepa9fYC7Py2g09yOH6Tmz6x6skNqHCvAc42zaqfZVHHVY/H8zRJ3S835TAarrFAMRUFdCXVG7KLMrCYv74CgV42768kzlRq8uaVnphglWmDtqzUF9mbtrZUy20Wc35ACkdeBiKgJ3EkVNqq4kDMeGpNv4Wgt3u9D0tgGSGyY0oq6YMxy6pkRv14rZ2TQZVxk81thcamgV5GouauMcmt3AKuXgyjRpQ==\&quot;,</span><br><span class="hljs-string">    \&quot;phonenumber\&quot;: \&quot;13800138010\&quot;,</span><br><span class="hljs-string">    \&quot;nickName\&quot;: \&quot;测试用户\&quot;,</span><br><span class="hljs-string">    \&quot;code\&quot;: \&quot;\&quot;,</span><br><span class="hljs-string">    \&quot;uuid\&quot;: \&quot;<span class="hljs-variable">$UUID</span>\&quot;,</span><br><span class="hljs-string">    \&quot;topDeptId\&quot;: 100</span><br><span class="hljs-string">  &#125;&quot;</span> -v<br></code></pre></td></tr></table></figure>
+
+<p>其中 <code>uuid</code>、<code>topDeptId</code> 根据报错回显内容在文档中一点点抠出来：</p>
+<p><img src="/img/image-20260309200119449.png" srcset="/img/loading.gif" lazyload alt="参数从文档中抠出"></p>
+<h2 id="swagger未授权到SQL注入"><a href="#swagger未授权到SQL注入" class="headerlink" title="swagger未授权到SQL注入"></a>swagger未授权到SQL注入</h2><h3 id="案例三-浙大某研究院"><a href="#案例三-浙大某研究院" class="headerlink" title="案例三-浙大某研究院"></a>案例三-浙大某研究院</h3><p>Swagger（现核心规范称为 OpenAPI）是一套用于描述、生成、使用和可视化 RESTful Web 服务的开源框架，它通过标准化的 YAML 或 JSON 格式文档定义接口细节（如 URL、参数、返回值），不仅能自动生成交互式文档供开发者测试调试，还能自动生成多种语言的客户端 SDK 和服务端存根代码，极大地提升了前后端协作效率与 API 管理的规范性。</p>
+<p>在遇到 swagger 也是可以直接平台调试，比手动 fuzz 更快。</p>
+<p>尝试了很多接口，发现都有 token 校验直接报错了：</p>
+<p><img src="/img/image-20260309200651288.png" srcset="/img/loading.gif" lazyload alt="大部分接口有鉴权"></p>
+<p>在一个接口中发现报错了，很可疑：</p>
+<p><img src="/img/image-20260309200851585.png" srcset="/img/loading.gif" lazyload alt="可疑错误回显"></p>
+<p>后面上 SQLMap 探测一手：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">python3 sqlmap.py -r zd.txt --batch<br></code></pre></td></tr></table></figure>
+
+<p><img src="/img/image-20260309201224494.png" srcset="/img/loading.gif" lazyload alt="SQLMap 探测结果"></p>
+<p>跑出文件读写权限：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">python3 sqlmap.py -r zd.txt --sql-query=<span class="hljs-string">&quot;SELECT @@secure_file_priv&quot;</span> --batch<br></code></pre></td></tr></table></figure>
+
+<p><img src="/img/image-20260309201407640.png" srcset="/img/loading.gif" lazyload alt="secure_file_priv 回显"></p>
+<p>只能向特定文件读写，很难 getshell 了：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">python3 sqlmap.py -r zd.txt --dbs --batch<br></code></pre></td></tr></table></figure>
+
+<p><img src="/img/image-20260309201522703.png" srcset="/img/loading.gif" lazyload alt="列出数据库名"></p>
+<p>跑出库名，评估影响后直接跑路。***</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98/" class="category-chain-item">漏洞挖掘</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E6%9C%AA%E6%8E%88%E6%9D%83%E8%AE%BF%E9%97%AE/" class="print-no-link">#未授权访问</a>
+      
+        <a href="/tags/%E5%AE%9E%E6%88%98%E6%94%BB%E9%98%B2/" class="print-no-link">#实战攻防</a>
+      
+        <a href="/tags/SQL%E6%B3%A8%E5%85%A5/" class="print-no-link">#SQL注入</a>
+      
+        <a href="/tags/API%E5%AE%89%E5%85%A8/" class="print-no-link">#API安全</a>
+      
+        <a href="/tags/Swagger/" class="print-no-link">#Swagger</a>
+      
+        <a href="/tags/Knife4j/" class="print-no-link">#Knife4j</a>
+      
+    </div>
+  
+</div>
+
+
+              
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/03/06/shiro550%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8%E6%8E%A2%E7%A9%B6/" title="shiro550反序列化漏洞利用探究（附实战案例）">
+                        <span class="hidden-mobile">shiro550反序列化漏洞利用探究（附实战案例）</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>Table of Contents</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Search</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">Keyword</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">Blog works best with JavaScript enabled</div>
+  </noscript>
+</body>
+</html>
