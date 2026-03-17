@@ -95,17 +95,17 @@ h1, h2, h3 {
   color: #d0a7e4;
 }
 
-/* Mac 风格代码块 - 纯白背景 + 好看字体 */
+/* Mac 风格代码块 - 无边框 + 纯白背景 */
 
 /* 代码块整体容器 */
 figure.highlight {
   position: relative;
   margin: 20px 0;
-  border-radius: 10px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
   overflow: hidden;
   background-color: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  border: none !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
 }
 
 /* 顶部标题栏 */
@@ -113,42 +113,39 @@ figure.highlight .code-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 42px;
-  padding: 0 16px;
+  height: 38px;
+  padding: 0 14px;
   background-color: #ffffff;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: none;
 }
 
 /* Mac 三个按钮 */
 figure.highlight .code-header .mac-dots {
   display: flex;
-  gap: 7px;
+  gap: 6px;
 }
 
 figure.highlight .code-header .mac-dot {
-  width: 12px;
-  height: 12px;
+  width: 11px;
+  height: 11px;
   border-radius: 50%;
 }
 
 figure.highlight .code-header .mac-dot.red {
   background-color: #ff5f57;
-  border: 1px solid #e0443e;
 }
 
 figure.highlight .code-header .mac-dot.yellow {
   background-color: #febc2e;
-  border: 1px solid #dba524;
 }
 
 figure.highlight .code-header .mac-dot.green {
   background-color: #28c840;
-  border: 1px solid #1aab29;
 }
 
 /* 语言标签 */
 figure.highlight .code-header .code-lang {
-  font-size: 12px;
+  font-size: 11px;
   color: #999;
   font-weight: 500;
   text-transform: uppercase;
@@ -163,19 +160,19 @@ figure.highlight table {
   border: none !important;
 }
 
-/* 行号列 - 纯白背景 */
+/* 行号列 - 无边框 */
 figure.highlight td.gutter {
   background-color: #ffffff !important;
-  border-right: 1px solid #f0f0f0;
-  padding: 8px 12px !important;
-  min-width: 45px;
+  border-right: none !important;
+  padding: 10px 12px !important;
+  min-width: 40px;
 }
 
 figure.highlight td.gutter pre {
   background-color: transparent !important;
-  color: #b0b0b0;
+  color: #d0d0d0;
   font-size: 13px;
-  line-height: 1.7;
+  line-height: 1.6;
   padding: 0 !important;
   font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'SF Mono', 'Monaco', monospace;
 }
@@ -183,13 +180,13 @@ figure.highlight td.gutter pre {
 /* 代码列 - 纯白背景 */
 figure.highlight td.code {
   background-color: #ffffff !important;
-  padding: 8px 16px !important;
+  padding: 10px 16px !important;
 }
 
 figure.highlight td.code pre {
   background-color: transparent !important;
   color: #2c2c2c;
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.6;
   padding: 0 !important;
   font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'SF Mono', 'Monaco', monospace;
