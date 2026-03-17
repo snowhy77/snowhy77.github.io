@@ -95,171 +95,164 @@ h1, h2, h3 {
   color: #d0a7e4;
 }
 
-/* 代码块样式 - Mac 风格白色背景 */
-pre, code {
-  border-radius: 8px;
-  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Mono', 'Roboto Mono', monospace;
-}
+/* Mac 风格代码块 - 参考图片样式 */
 
-/* Mac 风格代码块容器 */
-.markdown-body pre {
+/* 代码块整体容器 */
+figure.highlight {
   position: relative;
-  background-color: #ffffff !important;
-  border: 1px solid #e1e4e8;
-  border-radius: 12px;
-  margin-bottom: 16px;
-  padding-top: 32px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  margin: 1.5em 0;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
   overflow: hidden;
+  background-color: #ffffff !important;
 }
 
-/* Mac 风格三个按钮 - 使用伪元素实现 */
-.markdown-body pre::before {
+/* Mac 风格标题栏 - 深色背景 */
+figure.highlight::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 38px;
+  background: linear-gradient(to bottom, #4a4a4a, #3a3a3a);
+  z-index: 10;
+}
+
+/* 三个彩色按钮容器 */
+figure.highlight::after {
   content: '';
   position: absolute;
   top: 10px;
-  left: 12px;
-  width: 54px;
+  left: 14px;
+  width: 52px;
   height: 14px;
+  z-index: 11;
+}
+
+/* 红色按钮 */
+figure.highlight .mac-red-dot,
+figure.highlight::after {
   background-image:
-    radial-gradient(circle, #ff5f56 6px, transparent 6px),
-    radial-gradient(circle, #ffbd2e 6px, transparent 6px),
-    radial-gradient(circle, #27c93f 6px, transparent 6px);
+    radial-gradient(circle, #ff5f57 7px, transparent 7px),
+    radial-gradient(circle, #febc2e 7px, transparent 7px),
+    radial-gradient(circle, #28c840 7px, transparent 7px);
   background-repeat: no-repeat;
-  background-position: 0 center, 18px center, 36px center;
-  z-index: 1;
+  background-position: 0 0, 18px 0, 36px 0;
 }
 
-/* 代码内容区域 */
-.markdown-body pre code {
-  display: block;
-  padding: 12px 16px;
-  overflow-x: auto;
-  background: transparent;
-  border-radius: 0;
-  font-size: 14px;
-  line-height: 1.6;
-  color: #24292e;
-}
-
-/* 代码行号样式 */
-.markdown-body pre .line-numbers {
-  color: #999;
-  background-color: transparent;
-  border-right: 1px solid #eee;
-  padding-right: 10px;
-  user-select: none;
-}
-
-/* 代码高亮颜色 - 明亮主题 */
-.markdown-body pre .hljs-keyword {
-  color: #d73a49;
-  font-weight: 500;
-}
-
-.markdown-body pre .hljs-string {
-  color: #032f62;
-}
-
-.markdown-body pre .hljs-comment {
-  color: #6a737d;
-  font-style: italic;
-}
-
-.markdown-body pre .hljs-function {
-  color: #6f42c1;
-}
-
-.markdown-body pre .hljs-tag {
-  color: #22863a;
-}
-
-.markdown-body pre .hljs-attr {
-  color: #6f42c1;
-}
-
-.markdown-body pre .hljs-name {
-  color: #22863a;
-}
-
-.markdown-body pre .hljs-number {
-  color: #005cc5;
-}
-
-.markdown-body pre .hljs-variable {
-  color: #e36209;
-}
-
-.markdown-body pre .hljs-class {
-  color: #22863a;
-}
-
-.markdown-body pre .hljs-title {
-  color: #6f42c1;
-}
-
-/* 行内代码样式 */
-.markdown-body code:not([class*="language-"]) {
-  padding: 0.2em 0.4em;
-  margin: 0;
-  font-size: 85%;
-  background-color: rgba(175, 184, 193, 0.2);
-  border-radius: 6px;
-  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Mono', 'Roboto Mono', monospace;
-}
-
-/* 暗色模式下保持代码块为白色背景 */
-[data-user-color-scheme='dark'] .markdown-body pre {
-  background-color: #ffffff !important;
-  color: #24292e;
-  border-color: #d1d5da;
-}
-
-[data-user-color-scheme='dark'] .markdown-body pre::before {
-  background-image:
-    radial-gradient(circle, #ff5f56 6px, transparent 6px),
-    radial-gradient(circle, #ffbd2e 6px, transparent 6px),
-    radial-gradient(circle, #27c93f 6px, transparent 6px);
-}
-
-/* Mac 风格代码块 - figure.highlight (Hexo 主题实际使用的选择器) */
-figure.highlight {
-  position: relative;
-  margin: 1em 0;
-  border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-  overflow: visible;
-}
-
+/* 代码表格 */
 figure.highlight table {
+  margin-top: 38px !important;
   background-color: #ffffff !important;
-  border-radius: 0 0 12px 12px !important;
-  margin: 0 !important;
+  border-radius: 0 0 8px 8px !important;
   width: 100% !important;
+}
+
+/* 行号列 */
+figure.highlight td.gutter {
+  background-color: #f5f5f5 !important;
+  border-right: 1px solid #e0e0e0;
+}
+
+figure.highlight td.gutter pre {
+  background-color: #f5f5f5 !important;
+  color: #999;
+  font-size: 13px;
+  line-height: 1.6;
+  padding: 8px 12px !important;
+  font-family: 'SF Mono', 'Monaco', 'Consolas', 'Courier New', monospace;
+}
+
+/* 代码列 */
+figure.highlight td.code {
+  background-color: #ffffff !important;
 }
 
 figure.highlight td.code pre {
   background-color: #ffffff !important;
-  padding: 12px 16px;
+  color: #333;
   font-size: 14px;
   line-height: 1.6;
-  color: #24292e;
+  padding: 8px 16px !important;
+  font-family: 'SF Mono', 'Monaco', 'Consolas', 'Courier New', monospace;
+  font-weight: 400;
 }
 
-figure.highlight td.gutter pre {
-  background-color: #ffffff !important;
-  color: #999;
-  border-right: 1px solid #eee;
-  padding-right: 10px;
+/* 代码高亮颜色 */
+figure.highlight .hljs-keyword {
+  color: #a626a4;
+  font-weight: 600;
 }
 
-/* 覆盖主题默认样式 */
-.markdown-body .highlight pre,
-.markdown-body pre,
-.markdown-body pre code.hljs,
-pre code.hljs {
+figure.highlight .hljs-string {
+  color: #50a14f;
+}
+
+figure.highlight .hljs-comment {
+  color: #a0a1a7;
+  font-style: italic;
+}
+
+figure.highlight .hljs-function {
+  color: #4078f2;
+}
+
+figure.highlight .hljs-tag {
+  color: #a626a4;
+}
+
+figure.highlight .hljs-attr {
+  color: #986801;
+}
+
+figure.highlight .hljs-name {
+  color: #e45649;
+}
+
+figure.highlight .hljs-number {
+  color: #986801;
+}
+
+figure.highlight .hljs-variable {
+  color: #e45649;
+}
+
+figure.highlight .hljs-class {
+  color: #c18401;
+}
+
+figure.highlight .hljs-title {
+  color: #4078f2;
+}
+
+/* 行内代码 */
+.markdown-body code:not([class*="language-"]) {
+  padding: 0.2em 0.5em;
+  margin: 0;
+  font-size: 90%;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  font-family: 'SF Mono', 'Monaco', 'Consolas', 'Courier New', monospace;
+  color: #e45649;
+}
+
+/* 暗色模式 */
+[data-user-color-scheme='dark'] figure.highlight {
   background-color: #ffffff !important;
-  border-radius: 0 0 12px 12px;
+}
+
+[data-user-color-scheme='dark'] figure.highlight table {
+  background-color: #ffffff !important;
+}
+
+[data-user-color-scheme='dark'] figure.highlight td.code pre {
+  background-color: #ffffff !important;
+  color: #333;
+}
+
+[data-user-color-scheme='dark'] figure.highlight td.gutter pre {
+  background-color: #f5f5f5 !important;
 }
 
 /* 文章卡片悬停效果 */
