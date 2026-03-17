@@ -95,10 +95,10 @@ h1, h2, h3 {
   color: #d0a7e4;
 }
 
-/* Mac 风格代码块 - 无边框 + 纯白背景 */
+/* Mac 风格代码块 - 无边框 + 纯白背景 (Prism.js) */
 
 /* 代码块整体容器 */
-figure.highlight {
+pre[class*="language-"] {
   position: relative;
   margin: 20px 0;
   border-radius: 12px;
@@ -106,92 +106,142 @@ figure.highlight {
   background-color: #ffffff;
   border: none !important;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  padding: 20px !important;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'SF Mono', 'Monaco', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  letter-spacing: 0.3px;
 }
 
-/* 顶部标题栏 */
-figure.highlight .code-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  height: 38px;
-  padding: 0 14px;
-  background-color: #ffffff;
-  border-bottom: none;
+/* 行号容器 */
+pre[class*="language-"].line-numbers {
+  padding-left: 3.8em !important;
 }
 
-/* Mac 三个按钮 */
-figure.highlight .code-header .mac-dots {
-  display: flex;
-  gap: 6px;
+/* 行号样式 */
+.line-numbers .line-numbers-rows {
+  border-right: none !important;
+  padding: 0;
+  margin: 0;
 }
 
-figure.highlight .code-header .mac-dot {
-  width: 11px;
-  height: 11px;
-  border-radius: 50%;
+.line-numbers-rows > span {
+  color: #d0d0d0;
+  font-size: 13px;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'SF Mono', 'Monaco', monospace;
 }
 
-figure.highlight .code-header .mac-dot.red {
-  background-color: #ff5f57;
-}
-
-figure.highlight .code-header .mac-dot.yellow {
-  background-color: #febc2e;
-}
-
-figure.highlight .code-header .mac-dot.green {
-  background-color: #28c840;
-}
-
-/* 语言标签 */
-figure.highlight .code-header .code-lang {
-  font-size: 11px;
-  color: #999;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-/* 代码表格 */
-figure.highlight table {
-  margin: 0 !important;
-  background-color: #ffffff !important;
-  width: 100% !important;
+/* 代码内容 */
+pre[class*="language-"] code {
+  background-color: transparent !important;
+  color: #2c2c2c;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'SF Mono', 'Monaco', monospace;
+  font-size: 14px;
+  padding: 0 !important;
+  border-radius: 0;
   border: none !important;
 }
 
-/* 行号列 - 无边框 */
-figure.highlight td.gutter {
-  background-color: #ffffff !important;
-  border-right: none !important;
-  padding: 10px 12px !important;
-  min-width: 40px;
+/* 代码高亮颜色 - 清新风格 */
+.token.keyword {
+  color: #d73a49;
+  font-weight: 600;
 }
 
-figure.highlight td.gutter pre {
-  background-color: transparent !important;
-  color: #d0d0d0;
-  font-size: 13px;
-  line-height: 1.6;
-  padding: 0 !important;
+.token.string {
+  color: #032f62;
+  font-weight: 500;
+}
+
+.token.comment {
+  color: #999999;
+  font-style: normal;
+}
+
+.token.function {
+  color: #6f42c1;
+}
+
+.token.tag {
+  color: #22863a;
+}
+
+.token.attr-name {
+  color: #005cc5;
+}
+
+.token.attr-value {
+  color: #032f62;
+}
+
+.token.name {
+  color: #22863a;
+}
+
+.token.number {
+  color: #005cc5;
+  font-weight: 500;
+}
+
+.token.variable {
+  color: #e36209;
+}
+
+.token.class-name {
+  color: #6f42c1;
+}
+
+.token.builtin {
+  color: #005cc5;
+}
+
+.token.punctuation {
+  color: #24292e;
+}
+
+.token.operator {
+  color: #d73a49;
+}
+
+.token.boolean {
+  color: #005cc5;
+  font-weight: 500;
+}
+
+.token.property {
+  color: #005cc5;
+}
+
+/* 行内代码 - 纯白背景 */
+.markdown-body code:not([class*="language-"]) {
+  padding: 3px 8px;
+  margin: 0 2px;
+  font-size: 0.9em;
+  background-color: #ffffff;
+  border-radius: 6px;
   font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'SF Mono', 'Monaco', monospace;
+  color: #e83e8c;
+  border: 1px solid #f0f0f0;
 }
 
-/* 代码列 - 纯白背景 */
-figure.highlight td.code {
+/* 暗色模式 - 保持纯白背景 */
+[data-user-color-scheme='dark'] pre[class*="language-"] {
   background-color: #ffffff !important;
-  padding: 10px 16px !important;
 }
 
-figure.highlight td.code pre {
+[data-user-color-scheme='dark'] pre[class*="language-"] code {
   background-color: transparent !important;
   color: #2c2c2c;
-  font-size: 14px;
-  line-height: 1.6;
-  padding: 0 !important;
-  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'SF Mono', 'Monaco', monospace;
-  font-weight: 400;
-  letter-spacing: 0.3px;
+}
+
+[data-user-color-scheme='dark'] .line-numbers-rows > span {
+  color: #d0d0d0;
+}
+
+[data-user-color-scheme='dark'] .markdown-body code:not([class*="language-"]) {
+  background-color: #ffffff;
+  color: #e83e8c;
+  border-color: #f0f0f0;
 }
 
 /* 代码高亮颜色 - 清新风格 */
