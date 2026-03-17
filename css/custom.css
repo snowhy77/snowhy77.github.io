@@ -95,28 +95,66 @@ h1, h2, h3 {
   color: #d0a7e4;
 }
 
-/* 代码块样式 - 白色背景和高亮 */
+/* 代码块样式 - Mac 风格白色背景 */
 pre, code {
   border-radius: 8px;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Mono', 'Roboto Mono', monospace;
 }
 
-/* 代码块背景设置为白色 */
+/* Mac 风格代码块容器 */
 .markdown-body pre {
+  position: relative;
   background-color: #ffffff !important;
   border: 1px solid #e1e4e8;
+  border-radius: 12px;
   margin-bottom: 16px;
+  padding-top: 32px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+/* Mac 风格三个按钮 - 使用伪元素实现 */
+.markdown-body pre::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  width: 54px;
+  height: 14px;
+  background-image:
+    radial-gradient(circle, #ff5f56 6px, transparent 6px),
+    radial-gradient(circle, #ffbd2e 6px, transparent 6px),
+    radial-gradient(circle, #27c93f 6px, transparent 6px);
+  background-repeat: no-repeat;
+  background-position: 0 center, 18px center, 36px center;
+  z-index: 1;
+}
+
+/* 代码内容区域 */
+.markdown-body pre code {
+  display: block;
+  padding: 12px 16px;
+  overflow-x: auto;
+  background: transparent;
+  border-radius: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #24292e;
 }
 
 /* 代码行号样式 */
 .markdown-body pre .line-numbers {
-  color: #6a737d;
-  background-color: #f6f8fa;
-  border-right: 1px solid #e1e4e8;
+  color: #999;
+  background-color: transparent;
+  border-right: 1px solid #eee;
+  padding-right: 10px;
+  user-select: none;
 }
 
 /* 代码高亮颜色 - 明亮主题 */
 .markdown-body pre .hljs-keyword {
   color: #d73a49;
+  font-weight: 500;
 }
 
 .markdown-body pre .hljs-string {
@@ -125,6 +163,7 @@ pre, code {
 
 .markdown-body pre .hljs-comment {
   color: #6a737d;
+  font-style: italic;
 }
 
 .markdown-body pre .hljs-function {
@@ -143,6 +182,22 @@ pre, code {
   color: #22863a;
 }
 
+.markdown-body pre .hljs-number {
+  color: #005cc5;
+}
+
+.markdown-body pre .hljs-variable {
+  color: #e36209;
+}
+
+.markdown-body pre .hljs-class {
+  color: #22863a;
+}
+
+.markdown-body pre .hljs-title {
+  color: #6f42c1;
+}
+
 /* 行内代码样式 */
 .markdown-body code:not([class*="language-"]) {
   padding: 0.2em 0.4em;
@@ -150,12 +205,21 @@ pre, code {
   font-size: 85%;
   background-color: rgba(175, 184, 193, 0.2);
   border-radius: 6px;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Mono', 'Roboto Mono', monospace;
 }
 
 /* 暗色模式下保持代码块为白色背景 */
 [data-user-color-scheme='dark'] .markdown-body pre {
   background-color: #ffffff !important;
   color: #24292e;
+  border-color: #d1d5da;
+}
+
+[data-user-color-scheme='dark'] .markdown-body pre::before {
+  background-image:
+    radial-gradient(circle, #ff5f56 6px, transparent 6px),
+    radial-gradient(circle, #ffbd2e 6px, transparent 6px),
+    radial-gradient(circle, #27c93f 6px, transparent 6px);
 }
 
 /* 文章卡片悬停效果 */
