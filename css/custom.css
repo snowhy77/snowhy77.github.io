@@ -109,7 +109,7 @@ pre[class*="language-"] {
   padding: 16px !important;
   padding-top: 36px !important; /* 为红绿灯留出空间 */
   font-family: 'JetBrains Mono', 'Fira Code', 'Ubuntu Mono', 'Consolas', 'Courier New', monospace;
-  font-size: 16px;
+  font-size: 18px;
   line-height: 1.6;
 }
 
@@ -141,7 +141,7 @@ pre[class*="language-"].line-numbers {
 
 .line-numbers-rows > span {
   color: #999999;
-  font-size: 15px;
+  font-size: 17px;
   font-family: 'JetBrains Mono', 'Fira Code', 'Ubuntu Mono', 'Consolas', 'Courier New', monospace;
 }
 
@@ -150,7 +150,7 @@ pre[class*="language-"] code {
   background-color: transparent !important;
   color: #333333;
   font-family: 'JetBrains Mono', 'Fira Code', 'Ubuntu Mono', 'Consolas', 'Courier New', monospace;
-  font-size: 16px;
+  font-size: 18px;
   padding: 0 !important;
   border-radius: 0;
   border: none !important;
@@ -318,7 +318,7 @@ figure.highlight td.gutter {
 
 figure.highlight td.gutter pre {
   color: #999999 !important;
-  font-size: 15px !important;
+  font-size: 17px !important;
   background-color: transparent !important;
   font-family: 'JetBrains Mono', 'Fira Code', 'Ubuntu Mono', 'Consolas', 'Courier New', monospace !important;
 }
@@ -331,7 +331,7 @@ figure.highlight td.code pre {
   background-color: transparent !important;
   color: #333333 !important;
   font-family: 'JetBrains Mono', 'Fira Code', 'Ubuntu Mono', 'Consolas', 'Courier New', monospace !important;
-  font-size: 16px !important; /* 调整字号，更大更清晰 */
+  font-size: 18px !important; /* 调整字号，更大更清晰 */
   line-height: 1.6 !important; /* 调整行高，更舒适 */
 }
 

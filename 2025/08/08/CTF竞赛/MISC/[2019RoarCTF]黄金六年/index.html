@@ -8,8 +8,8 @@
 <head>
   <meta charset="UTF-8">
 
-  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
-  <link rel="icon" href="/img/fluid.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/custom_logo.png">
+  <link rel="icon" href="/img/custom_logo.png">
   
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
@@ -23,7 +23,7 @@
 <meta property="og:type" content="article">
 <meta property="og:title" content="[2019RoarCTF]黄金六年">
 <meta property="og:url" content="https://kyrie711-wq.github.io/2025/08/08/CTF%E7%AB%9E%E8%B5%9B/MISC/[2019RoarCTF]%E9%BB%84%E9%87%91%E5%85%AD%E5%B9%B4/index.html">
-<meta property="og:site_name" content="snowhy的博客">
+<meta property="og:site_name" content="snowhy&#39;s blog">
 <meta property="og:description" content="本篇将分享一道关于视频隐写的 CTF 题目解题思路，涉及视频拆帧、二维码识别、Base64 解码和压缩包破解。 解题步骤1. 拆解视频帧，提取二维码首先，使用 ffmpeg 将视频 atta.mp4 拆分为静态图像序列，以便分析每一帧的内容。 1ffmpeg -i atta.mp4 -r 60 %d.bmp   遍历所有生成的图像，发现其中四张包含二维码。  扫描这些二维码，得到四段密钥：i、wa">
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="https://kyrie711-wq.github.io/img/screenshot-2025-07-23-145642.png">
@@ -43,7 +43,7 @@
   
   
   
-  <title>[2019RoarCTF]黄金六年 - snowhy的博客</title>
+  <title>[2019RoarCTF]黄金六年 - snowhy&#39;s blog</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -111,7 +111,7 @@
   <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
   <div class="container">
     <a class="navbar-brand" href="/">
-      <strong>snowhy的博客</strong>
+      <strong>snowhy&#39;s blog</strong>
     </a>
 
     <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"

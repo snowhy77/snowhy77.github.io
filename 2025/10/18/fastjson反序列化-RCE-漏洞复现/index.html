@@ -8,8 +8,8 @@
 <head>
   <meta charset="UTF-8">
 
-  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
-  <link rel="icon" href="/img/fluid.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/custom_logo.png">
+  <link rel="icon" href="/img/custom_logo.png">
   
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
@@ -23,7 +23,7 @@
 <meta property="og:type" content="article">
 <meta property="og:title" content="fastjson 1.2.24 反序列化 RCE 漏洞复现(CVE-2017-18349)">
 <meta property="og:url" content="https://kyrie711-wq.github.io/2025/10/18/fastjson%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96-RCE-%E6%BC%8F%E6%B4%9E%E5%A4%8D%E7%8E%B0/index.html">
-<meta property="og:site_name" content="snowhy的博客">
+<meta property="og:site_name" content="snowhy&#39;s blog">
 <meta property="og:description" content="📢 漏洞概述漏洞背景：1.fastjson 是阿里巴巴开发的一款高性能 JSON 解析库，在 Java 开发领域被广泛应用，用于处理 JSON 数据的序列化与反序列化操作，众多企业级应用借助它实现高效的数据交互与处理。 2.Java 反序列化机制是 Java 提供的一种将字节流重新转换为 Java 对象的功能，在分布式系统、远程通信等场景中常用，但该机制存在被恶意利用的风险。 3.当 fastj">
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="https://kyrie711-wq.github.io/img/wps1-1755424575710-1-1755424618927-3.jpg">
@@ -31,14 +31,14 @@
 <meta property="article:modified_time" content="2025-12-26T08:32:36.162Z">
 <meta property="article:author" content="kyrie711-wq">
 <meta property="article:tag" content="漏洞分析">
-<meta property="article:tag" content="漏洞利用">
 <meta property="article:tag" content="安全研究">
+<meta property="article:tag" content="漏洞利用">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://kyrie711-wq.github.io/img/wps1-1755424575710-1-1755424618927-3.jpg">
   
   
   
-  <title>fastjson 1.2.24 反序列化 RCE 漏洞复现(CVE-2017-18349) - snowhy的博客</title>
+  <title>fastjson 1.2.24 反序列化 RCE 漏洞复现(CVE-2017-18349) - snowhy&#39;s blog</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -106,7 +106,7 @@
   <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
   <div class="container">
     <a class="navbar-brand" href="/">
-      <strong>snowhy的博客</strong>
+      <strong>snowhy&#39;s blog</strong>
     </a>
 
     <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
@@ -428,9 +428,9 @@
       
         <a href="/tags/%E6%BC%8F%E6%B4%9E%E5%88%86%E6%9E%90/" class="print-no-link">#漏洞分析</a>
       
-        <a href="/tags/%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8/" class="print-no-link">#漏洞利用</a>
-      
         <a href="/tags/%E5%AE%89%E5%85%A8%E7%A0%94%E7%A9%B6/" class="print-no-link">#安全研究</a>
+      
+        <a href="/tags/%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8/" class="print-no-link">#漏洞利用</a>
       
     </div>
   

@@ -8,8 +8,8 @@
 <head>
   <meta charset="UTF-8">
 
-  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
-  <link rel="icon" href="/img/fluid.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/custom_logo.png">
+  <link rel="icon" href="/img/custom_logo.png">
   
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
@@ -23,7 +23,7 @@
 <meta property="og:type" content="article">
 <meta property="og:title" content="CSRF漏洞原理和进阶利用">
 <meta property="og:url" content="https://kyrie711-wq.github.io/2025/12/06/CSRF%E6%BC%8F%E6%B4%9E%E5%8E%9F%E7%90%86%E5%92%8C%E8%BF%9B%E9%98%B6%E5%88%A9%E7%94%A8/index.html">
-<meta property="og:site_name" content="snowhy的博客">
+<meta property="og:site_name" content="snowhy&#39;s blog">
 <meta property="og:description" content="CSRF漏洞原理和进阶利用前言最近打算重新学习下csrf和xss，这些top10漏洞原理其实深究起来也不简单，就当是巩固基础知识了。 csrf跨站请求伪造攻击，本质上是攻击者伪造请求并加以包装（可以是一个url，也可以是一个html页面），当受害者执行了攻击者伪造的请求会后携带已有的cookie到目标网站执行指定操作。 在正式学习之前，需要了解浏览器和服务端通信机制，以下几种概念是很重要的。">
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="https://kyrie711-wq.github.io/img/image-20251206172915102.png">
@@ -38,7 +38,7 @@
   
   
   
-  <title>CSRF漏洞原理和进阶利用 - snowhy的博客</title>
+  <title>CSRF漏洞原理和进阶利用 - snowhy&#39;s blog</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -106,7 +106,7 @@
   <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
   <div class="container">
     <a class="navbar-brand" href="/">
-      <strong>snowhy的博客</strong>
+      <strong>snowhy&#39;s blog</strong>
     </a>
 
     <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
