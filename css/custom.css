@@ -109,8 +109,8 @@ pre[class*="language-"] {
   padding: 16px !important;
   padding-top: 36px !important; /* 为红绿灯留出空间 */
   font-family: 'JetBrains Mono', 'Fira Code', 'Ubuntu Mono', 'Consolas', 'Courier New', monospace;
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 16px;
+  line-height: 1.6;
 }
 
 pre[class*="language-"]::before {
@@ -141,7 +141,7 @@ pre[class*="language-"].line-numbers {
 
 .line-numbers-rows > span {
   color: #999999;
-  font-size: 13px;
+  font-size: 15px;
   font-family: 'JetBrains Mono', 'Fira Code', 'Ubuntu Mono', 'Consolas', 'Courier New', monospace;
 }
 
@@ -150,7 +150,7 @@ pre[class*="language-"] code {
   background-color: transparent !important;
   color: #333333;
   font-family: 'JetBrains Mono', 'Fira Code', 'Ubuntu Mono', 'Consolas', 'Courier New', monospace;
-  font-size: 14px;
+  font-size: 16px;
   padding: 0 !important;
   border-radius: 0;
   border: none !important;
@@ -294,7 +294,7 @@ figure.highlight .code-header {
   border-bottom: none !important;
   padding: 0 16px !important; 
   padding-left: 70px !important; /* 给Mac按钮留出空间 */
-  font-size: 13px !important; /* 调整字体大小与截图类似 */
+  font-size: 14px !important; /* 调整字体大小与截图类似 */
   font-weight: normal !important;
   color: #666666 !important;
   height: 36px !important; /* 标题栏高度 */
@@ -318,7 +318,7 @@ figure.highlight td.gutter {
 
 figure.highlight td.gutter pre {
   color: #999999 !important;
-  font-size: 13px !important;
+  font-size: 15px !important;
   background-color: transparent !important;
   font-family: 'JetBrains Mono', 'Fira Code', 'Ubuntu Mono', 'Consolas', 'Courier New', monospace !important;
 }
@@ -331,8 +331,8 @@ figure.highlight td.code pre {
   background-color: transparent !important;
   color: #333333 !important;
   font-family: 'JetBrains Mono', 'Fira Code', 'Ubuntu Mono', 'Consolas', 'Courier New', monospace !important;
-  font-size: 14px !important; /* 调整字号，与截图类似 */
-  line-height: 1.5 !important; /* 调整行高，更紧凑 */
+  font-size: 16px !important; /* 调整字号，更大更清晰 */
+  line-height: 1.6 !important; /* 调整行高，更舒适 */
 }
 
 /* 终端风格五彩语法高亮 */
