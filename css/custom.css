@@ -95,27 +95,40 @@ h1, h2, h3 {
   color: #d0a7e4;
 }
 
-/* Mac 风格代码块 - 无边框 + 纯白背景 (Prism.js) */
+/* 终端风格代码块 - 白色背景 + 五彩语法高亮 */
 
 /* 代码块整体容器 */
 pre[class*="language-"] {
   position: relative;
   margin: 20px 0;
-  border-radius: 12px;
+  border-radius: 8px;
   overflow: hidden;
   background-color: #ffffff;
-  border: none !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-  padding: 20px !important;
-  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'SF Mono', 'Monaco', monospace;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 16px !important;
+  padding-top: 36px !important; /* 为红绿灯留出空间 */
+  font-family: 'JetBrains Mono', 'Fira Code', 'Ubuntu Mono', 'Consolas', 'Courier New', monospace;
   font-size: 14px;
-  line-height: 1.6;
-  letter-spacing: 0.3px;
+  line-height: 1.5;
+}
+
+pre[class*="language-"]::before {
+  content: " ";
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fc625d;
+  box-shadow: 20px 0 #fdbc40, 40px 0 #35cd4b;
+  z-index: 2;
 }
 
 /* 行号容器 */
 pre[class*="language-"].line-numbers {
-  padding-left: 3.8em !important;
+  padding-left: 3.5em !important;
 }
 
 /* 行号样式 */
@@ -123,213 +136,341 @@ pre[class*="language-"].line-numbers {
   border-right: none !important;
   padding: 0;
   margin: 0;
+  top: 36px !important; /* 与容器 padding-top 保持一致 */
 }
 
 .line-numbers-rows > span {
-  color: #d0d0d0;
+  color: #999999;
   font-size: 13px;
-  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'SF Mono', 'Monaco', monospace;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Ubuntu Mono', 'Consolas', 'Courier New', monospace;
 }
 
 /* 代码内容 */
 pre[class*="language-"] code {
   background-color: transparent !important;
-  color: #2c2c2c;
-  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'SF Mono', 'Monaco', monospace;
+  color: #333333;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Ubuntu Mono', 'Consolas', 'Courier New', monospace;
   font-size: 14px;
   padding: 0 !important;
   border-radius: 0;
   border: none !important;
 }
 
-/* 代码高亮颜色 - 清新风格 */
+/* 代码高亮颜色 - 终端五彩风格 */
 .token.keyword {
-  color: #d73a49;
+  color: #c678dd; /* 紫色 - 关键字 */
   font-weight: 600;
 }
 
 .token.string {
-  color: #032f62;
-  font-weight: 500;
+  color: #98c379; /* 绿色 - 字符串 */
 }
 
 .token.comment {
-  color: #999999;
-  font-style: normal;
+  color: #7f8c8d; /* 灰色 - 注释 */
+  font-style: italic;
 }
 
 .token.function {
-  color: #6f42c1;
+  color: #61afef; /* 蓝色 - 函数 */
 }
 
 .token.tag {
-  color: #22863a;
+  color: #e06c75; /* 红色 - 标签 */
 }
 
 .token.attr-name {
-  color: #005cc5;
+  color: #d19a66; /* 橙色 - 属性名 */
 }
 
 .token.attr-value {
-  color: #032f62;
+  color: #98c379; /* 绿色 - 属性值 */
 }
 
 .token.name {
-  color: #22863a;
+  color: #e06c75; /* 红色 - 名称 */
 }
 
 .token.number {
-  color: #005cc5;
-  font-weight: 500;
+  color: #d19a66; /* 橙色 - 数字 */
 }
 
 .token.variable {
-  color: #e36209;
+  color: #e5c07b; /* 黄色 - 变量 */
 }
 
 .token.class-name {
-  color: #6f42c1;
+  color: #61afef; /* 蓝色 - 类名 */
 }
 
 .token.builtin {
-  color: #005cc5;
+  color: #56b6c2; /* 青色 - 内置函数 */
 }
 
 .token.punctuation {
-  color: #24292e;
+  color: #abb2bf; /* 浅灰 - 标点 */
 }
 
 .token.operator {
-  color: #d73a49;
+  color: #c678dd; /* 紫色 - 操作符 */
 }
 
 .token.boolean {
-  color: #005cc5;
-  font-weight: 500;
+  color: #d19a66; /* 橙色 - 布尔值 */
 }
 
 .token.property {
-  color: #005cc5;
+  color: #e06c75; /* 红色 - 属性 */
 }
 
-/* 行内代码 - 纯白背景 */
+/* 行内代码 */
 .markdown-body code:not([class*="language-"]) {
-  padding: 3px 8px;
+  padding: 2px 6px;
   margin: 0 2px;
   font-size: 0.9em;
-  background-color: #ffffff;
-  border-radius: 6px;
-  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'SF Mono', 'Monaco', monospace;
-  color: #e83e8c;
-  border: 1px solid #f0f0f0;
+  background-color: transparent;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Ubuntu Mono', 'Consolas', 'Courier New', monospace;
+  color: #333333; /* 黑色 */
+  font-weight: 500;
+  border: none;
 }
 
-/* 暗色模式 - 保持纯白背景 */
+/* 暗色模式 - 保持白色背景 */
 [data-user-color-scheme='dark'] pre[class*="language-"] {
   background-color: #ffffff !important;
+  border: none;
 }
 
 [data-user-color-scheme='dark'] pre[class*="language-"] code {
   background-color: transparent !important;
-  color: #2c2c2c;
+  color: #333333;
 }
 
 [data-user-color-scheme='dark'] .line-numbers-rows > span {
-  color: #d0d0d0;
+  color: #999999;
 }
 
 [data-user-color-scheme='dark'] .markdown-body code:not([class*="language-"]) {
-  background-color: #ffffff;
-  color: #e83e8c;
-  border-color: #f0f0f0;
+  background-color: transparent;
+  color: #c4c6c9; /* 暗色模式下柔和的浅灰色 */
+  font-weight: 500;
+  border: none;
 }
 
-/* 代码高亮颜色 - 清新风格 */
+/* Hexo 代码块样式 - Mac终端风格 */
+figure.highlight {
+  position: relative !important;
+  background-color: #ffffff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  margin: 20px 0 !important;
+  overflow: hidden !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  padding-top: 36px !important; /* 预留红绿灯空间 */
+}
+
+figure.highlight::before {
+  content: " ";
+  position: absolute;
+  top: 12px; /* 调整红绿灯垂直位置 */
+  left: 12px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fc625d;
+  box-shadow: 20px 0 #fdbc40, 40px 0 #35cd4b;
+  z-index: 2;
+}
+
+figure.highlight figcaption,
+figure.highlight .code-header {
+  position: relative !important;
+  margin-top: -36px !important; /* 抵消容器的 padding-top */
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  background-color: #f5f5f5 !important;
+  border-bottom: none !important;
+  padding: 0 16px !important; 
+  padding-left: 70px !important; /* 给Mac按钮留出空间 */
+  font-size: 13px !important; /* 调整字体大小与截图类似 */
+  font-weight: normal !important;
+  color: #666666 !important;
+  height: 36px !important; /* 标题栏高度 */
+  box-sizing: border-box !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+figure.highlight table {
+  background-color: #ffffff !important;
+  border-collapse: collapse !important;
+  width: 100% !important;
+  margin: 0 !important;
+}
+
+figure.highlight td.gutter {
+  background-color: #fafafa !important;
+  border-right: none !important;
+  padding: 8px !important;
+}
+
+figure.highlight td.gutter pre {
+  color: #999999 !important;
+  font-size: 13px !important;
+  background-color: transparent !important;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Ubuntu Mono', 'Consolas', 'Courier New', monospace !important;
+}
+
+figure.highlight td.code {
+  padding: 8px 16px !important;
+}
+
+figure.highlight td.code pre {
+  background-color: transparent !important;
+  color: #333333 !important;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Ubuntu Mono', 'Consolas', 'Courier New', monospace !important;
+  font-size: 14px !important; /* 调整字号，与截图类似 */
+  line-height: 1.5 !important; /* 调整行高，更紧凑 */
+}
+
+/* 终端风格五彩语法高亮 */
+figure.highlight .hljs-keyword,
 figure.highlight .hljs-keyword {
-  color: #d73a49;
+  color: #c678dd !important;
   font-weight: 600;
 }
 
+figure.highlight .hljs-string,
 figure.highlight .hljs-string {
-  color: #032f62;
-  font-weight: 500;
+  color: #98c379 !important;
 }
 
+figure.highlight .hljs-comment,
 figure.highlight .hljs-comment {
-  color: #999999;
-  font-style: normal;
+  color: #7f8c8d !important;
+  font-style: italic;
 }
 
-figure.highlight .hljs-function {
-  color: #6f42c1;
+figure.highlight .hljs-function,
+figure.highlight .hljs-title,
+figure.highlight .hljs-title.class_,
+figure.highlight .hljs-title.function_ {
+  color: #61afef !important;
 }
 
-figure.highlight .hljs-tag {
-  color: #22863a;
-}
-
-figure.highlight .hljs-attr {
-  color: #005cc5;
-}
-
+figure.highlight .hljs-tag,
 figure.highlight .hljs-name {
-  color: #22863a;
+  color: #e06c75 !important;
 }
 
-figure.highlight .hljs-number {
-  color: #005cc5;
-  font-weight: 500;
+figure.highlight .hljs-attr,
+figure.highlight .hljs-attribute {
+  color: #d19a66 !important;
 }
 
-figure.highlight .hljs-variable {
-  color: #e36209;
+figure.highlight .hljs-number,
+figure.highlight .hljs-literal,
+figure.highlight .hljs-boolean {
+  color: #d19a66 !important;
 }
 
-figure.highlight .hljs-class {
-  color: #6f42c1;
+figure.highlight .hljs-variable,
+figure.highlight .hljs-template-variable {
+  color: #e5c07b !important;
 }
 
-figure.highlight .hljs-title {
-  color: #6f42c1;
+figure.highlight .hljs-class,
+figure.highlight .hljs-class .hljs-keyword {
+  color: #61afef !important;
 }
 
-figure.highlight .hljs-built_in {
-  color: #005cc5;
+figure.highlight .hljs-built_in,
+figure.highlight .hljs-builtin-name {
+  color: #56b6c2 !important;
 }
 
 figure.highlight .hljs-params {
-  color: #24292e;
+  color: #333333 !important;
 }
 
-figure.highlight .hljs-meta {
-  color: #6f42c1;
+figure.highlight .hljs-meta,
+figure.highlight .hljs-meta .hljs-string {
+  color: #c678dd !important;
 }
 
 figure.highlight .hljs-doctag {
-  color: #d73a49;
+  color: #c678dd !important;
 }
 
-/* 行内代码 - 纯白背景 */
-.markdown-body code:not([class*="language-"]) {
-  padding: 3px 8px;
-  margin: 0 2px;
-  font-size: 0.9em;
-  background-color: #ffffff;
-  border-radius: 6px;
-  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'SF Mono', 'Monaco', monospace;
-  color: #e83e8c;
-  border: 1px solid #f0f0f0;
+figure.highlight .hljs-type {
+  color: #61afef !important;
 }
 
-/* 暗色模式 - 保持纯白背景 */
+figure.highlight .hljs-section {
+  color: #e06c75 !important;
+}
+
+figure.highlight .hljs-selector-id {
+  color: #e06c75 !important;
+}
+
+figure.highlight .hljs-selector-class {
+  color: #61afef !important;
+}
+
+figure.highlight .hljs-regexp {
+  color: #56b6c2 !important;
+}
+
+figure.highlight .hljs-symbol {
+  color: #d19a66 !important;
+}
+
+figure.highlight .hljs-link {
+  color: #61afef !important;
+  text-decoration: underline;
+}
+
+figure.highlight .hljs-emphasis {
+  font-style: italic !important;
+}
+
+figure.highlight .hljs-strong {
+  font-weight: 600 !important;
+}
+
+figure.highlight .hljs-punctuation {
+  color: #abb2bf !important;
+}
+
+figure.highlight .hljs-operator {
+  color: #c678dd !important;
+}
+
+figure.highlight .hljs-property {
+  color: #e06c75 !important;
+}
+
+figure.highlight .hljs-char.escape_ {
+  color: #d19a66 !important;
+}
+
+/* 暗色模式 - Hexo 代码块 */
 [data-user-color-scheme='dark'] figure.highlight {
   background-color: #ffffff !important;
-  border-color: #e1e4e8;
+  border: none;
+}
+
+[data-user-color-scheme='dark'] figure.highlight figcaption {
+  background-color: #f5f5f5;
+  border-bottom: none;
 }
 
 [data-user-color-scheme='dark'] figure.highlight .code-header {
-  background-color: #ffffff !important;
-  border-bottom-color: #e1e4e8;
+  background-color: #f5f5f5;
+  border-bottom: none;
 }
 
 [data-user-color-scheme='dark'] figure.highlight table {
@@ -337,7 +478,7 @@ figure.highlight .hljs-doctag {
 }
 
 [data-user-color-scheme='dark'] figure.highlight td.gutter {
-  background-color: #ffffff !important;
+  background-color: #fafafa !important;
 }
 
 [data-user-color-scheme='dark'] figure.highlight td.code {
@@ -346,18 +487,18 @@ figure.highlight .hljs-doctag {
 
 [data-user-color-scheme='dark'] figure.highlight td.code pre {
   background-color: transparent !important;
-  color: #2c2c2c;
+  color: #333333;
 }
 
 [data-user-color-scheme='dark'] figure.highlight td.gutter pre {
   background-color: transparent !important;
-  color: #b0b0b0;
+  color: #999999;
 }
 
 [data-user-color-scheme='dark'] .markdown-body code:not([class*="language-"]) {
-  background-color: #ffffff;
-  color: #e83e8c;
-  border-color: #f0f0f0;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #e06c75;
+  border: none;
 }
 
 /* 文章卡片悬停效果 */
